@@ -225,31 +225,34 @@ docker compose --profile lite up -d --build
 ## 🧩 Архитектура
 
 ```mermaid
-flowchart LR
-    JM["JMeter"]
-    BR["Браузер"]
-    subgraph stand["docker compose"]
-        BANK["bank-app<br/>Spring Boot 3, Java 21<br/>веб + REST"]
+flowchart TB
+    BR["🌐 Браузер"]
+    JM["📈 JMeter"]
+
+    subgraph core["Банк"]
+        BANK["bank-app<br/>Spring Boot 3 · Java 21<br/>веб-интерфейс + REST API"]
         PG[("PostgreSQL 16")]
-        K[["Kafka 3.8<br/>KRaft"]]
-        AF["Антифрод<br/>заглушка"]
-        PROM["Prometheus"]
-        KE["kafka-exporter"]
-        PE["postgres-exporter"]
-        GR["Grafana"]
+        K[["Kafka 3.8 · KRaft"]]
+        AF["«Антифрод»<br/>внешний сервис"]
+    end
+
+    subgraph mon["Мониторинг"]
+        PROM["Prometheus<br/>+ exporters Kafka и PostgreSQL"]
+        GR["Grafana<br/>2 дашборда"]
         INF[("InfluxDB 1.8")]
     end
+
     BR -->|HTML-формы| BANK
     JM -->|HTTP| BANK
     JM -->|Backend Listener| INF
     BANK -->|JPA| PG
     BANK -->|событие о переводе| K
     K -->|консьюмер| BANK
-    BANK -->|HTTP: проверка перевода| AF
-    PROM -->|метрики| BANK
-    PROM --> AF
-    PROM --> KE --> K
-    PROM --> PE --> PG
+    BANK -->|проверка перевода| AF
+    PROM -.->|метрики| BANK
+    PROM -.-> AF
+    PROM -.-> K
+    PROM -.-> PG
     GR --> PROM
     GR --> INF
 ```
