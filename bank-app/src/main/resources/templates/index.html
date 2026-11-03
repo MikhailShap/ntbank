@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Интернет-банк')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="public">
+    <header th:replace="~{fragments/layout :: publicTop}"></header>
+
+    <main class="public__main">
+        <div class="public__inner">
+
+            <div class="alert alert--ok" th:if="${param.logout}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-check"/></svg></span>
+                <span class="alert__body">Вы вышли из системы</span>
+            </div>
+
+            <section class="hero">
+                <div>
+                    <h1>НТ-Банк — банк, который можно сломать нагрузкой</h1>
+                    <p class="hero__lead">
+                        Учебный интернет-банк для практики нагрузочного тестирования: счета и карты,
+                        выписки, переводы с подтверждением по СМС, оплата услуг и шаблоны платежей.
+                        Всё работает и через обычные HTML-формы, и через REST API.
+                    </p>
+                    <div class="hero__cta">
+                        <a class="btn btn--lg" th:href="@{/login}">Войти</a>
+                        <a class="btn btn--lg btn--ghost" th:href="@{/register}">Регистрация</a>
+                    </div>
+                    <p class="small muted mt-3">
+                        Тестовые клиенты: <code class="inline">user0001</code> … <code class="inline">user1000</code>,
+                        пароль у всех <code class="inline">Passw0rd!</code>
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>Что внутри</h3>
+                    <div class="stack" style="gap:10px">
+                        <div class="quick">
+                            <span class="quick__icon"><svg class="icon"><use href="#i-transfer"/></svg></span>
+                            Перевод по телефону с OTP и асинхронным статусом
+                        </div>
+                        <div class="quick">
+                            <span class="quick__icon"><svg class="icon"><use href="#i-doc"/></svg></span>
+                            Выписка с фильтром по датам и пагинацией
+                        </div>
+                        <div class="quick">
+                            <span class="quick__icon"><svg class="icon"><use href="#i-flask"/></svg></span>
+                            Режим «Дефекты»: задержки, ошибки, утечки памяти
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid--3 mt-3" style="margin-top:36px">
+                <div class="card">
+                    <span class="quick__icon mb-2"><svg class="icon"><use href="#i-shield"/></svg></span>
+                    <h3>Реальные динамические значения</h3>
+                    <p class="muted mb-0">
+                        Идентификаторы и токены действительно меняются от запроса к запросу,
+                        а не захардкожены.
+                    </p>
+                </div>
+                <div class="card">
+                    <span class="quick__icon mb-2"><svg class="icon"><use href="#i-chart"/></svg></span>
+                    <h3>Метрики для Grafana</h3>
+                    <p class="muted mb-0">
+                        Приложение отдаёт метрики в формате Prometheus: время ответа,
+                        коды ошибок, пул соединений, JVM.
+                    </p>
+                </div>
+                <div class="card">
+                    <span class="quick__icon mb-2"><svg class="icon"><use href="#i-sms"/></svg></span>
+                    <h3>Тестовые СМС</h3>
+                    <p class="muted mb-0">
+                        Банк не отправляет настоящие сообщения: коды подтверждения
+                        видны на отдельной странице стенда.
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="public__foot">
+        НТ-Банк — вымышленный банк для учебных целей. Все совпадения случайны.
+    </footer>
+</div>
+</body>
+</html>

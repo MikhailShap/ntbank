@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Шаблоны платежей')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Шаблоны', 'templates')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Шаблоны платежей</h1>
+                    <p class="page-head__sub">Повторяйте привычные платежи одной кнопкой</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn" th:href="@{/payments}">
+                        <svg class="icon"><use href="#i-plus"/></svg> Создать шаблон
+                    </a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--2" th:if="${not #lists.isEmpty(templates)}">
+                <div class="card" th:each="t : ${templates}">
+                    <div class="acct__top">
+                        <span class="acct__icon">
+                            <svg class="icon"><use th:attr="href='#' + ${t.service.icon()}"/></svg>
+                        </span>
+                        <span>
+                            <span class="acct__title" th:text="${t.name}">Шаблон</span><br>
+                            <span class="acct__num" th:text="${t.service.provider}">Поставщик</span>
+                        </span>
+                    </div>
+
+                    <dl class="kv mb-2">
+                        <dt th:text="${t.service.accountLabel}">Лицевой счёт</dt>
+                        <dd class="mono" th:text="${t.personalAccount}">000000</dd>
+                        <dt>Сумма</dt>
+                        <dd th:text="${@fmt.money(t.amount, 'RUB')}">0 ₽</dd>
+                        <dt>Счёт списания</dt>
+                        <dd th:text="${t.account.masked()}">•••• 0000</dd>
+                        <dt th:if="${t.lastUsedAt}">Последний платёж</dt>
+                        <dd th:if="${t.lastUsedAt}" th:text="${@fmt.dateTime(t.lastUsedAt)}">—</dd>
+                    </dl>
+
+                    <div class="row">
+                        <form method="post" th:action="@{'/templates/' + ${t.id} + '/pay'}">
+                            <button class="btn" type="submit">
+                                <svg class="icon"><use href="#i-bolt"/></svg> Повторить платёж
+                            </button>
+                        </form>
+                        <form method="post" th:action="@{'/templates/' + ${t.id} + '/delete'}">
+                            <button class="btn btn--ghost" type="submit">Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card empty" th:if="${#lists.isEmpty(templates)}">
+                <div class="empty__icon"><svg class="icon icon--xl"><use href="#i-bookmark"/></svg></div>
+                <p class="empty__title">Шаблонов пока нет</p>
+                <p>
+                    Оплатите любую услугу и поставьте галочку «Сохранить как шаблон» —
+                    он появится здесь.
+                </p>
+                <a class="btn mt-2" th:href="@{/payments}">
+                    <svg class="icon"><use href="#i-plus"/></svg> Создать шаблон
+                </a>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

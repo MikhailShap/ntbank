@@ -1,0 +1,26 @@
+# Источники данных создаются при старте Grafana — руками ничего настраивать не нужно.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 5s
+
+  # Сюда пишет JMeter через Backend Listener (InfluxdbBackendListenerClient)
+  - name: InfluxDB-JMeter
+    uid: influxdb-jmeter
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: jmeter
+    editable: false
+    jsonData:
+      dbName: jmeter
+      httpMode: GET
+      timeInterval: 5s

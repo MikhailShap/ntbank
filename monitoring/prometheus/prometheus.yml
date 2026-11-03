@@ -1,0 +1,33 @@
+# Prometheus стенда НТ-Банк: опрашивает все сервисы каждые 5 секунд.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  scrape_timeout: 4s
+
+scrape_configs:
+
+  # Банк: HTTP, JVM, HikariCP, Tomcat, Kafka-клиент, бизнес-метрики и флаги дефектов
+  - job_name: bank-app
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ "bank-app:8080" ]
+
+  # Внешняя система «Антифрод»
+  - job_name: antifraud
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ "antifraud:8081" ]
+
+  # Kafka: смещения топиков и лаг групп консьюмеров
+  - job_name: kafka
+    static_configs:
+      - targets: [ "kafka-exporter:9308" ]
+
+  # PostgreSQL: транзакции, соединения, обращения к таблицам
+  - job_name: postgres
+    static_configs:
+      - targets: [ "postgres-exporter:9187" ]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: [ "localhost:9090" ]

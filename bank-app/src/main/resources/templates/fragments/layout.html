@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!-- ============================== <head> ============================== -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title th:text="${title} + ' — НТ-Банк'">НТ-Банк</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+</head>
+
+<!-- ================ Шапка, боковое меню и логотип ===================== -->
+<th:block th:fragment="chrome(title, active)">
+    <input type="checkbox" id="nav" class="navcheck" aria-hidden="true">
+
+    <div class="brandbox">
+        <a class="logo" th:href="@{/dashboard}"><span class="logo__mark">НТ</span> НТ-Банк</a>
+    </div>
+
+    <header class="topbar">
+        <label class="navtoggle" for="nav" title="Меню" aria-label="Меню">
+            <svg class="icon"><use href="#i-menu"/></svg>
+        </label>
+        <p class="topbar__title" th:text="${title}">Главная</p>
+        <span class="topbar__spacer"></span>
+        <a class="userchip" th:href="@{/accounts}" th:if="${me != null}">
+            <span class="userchip__avatar" th:text="${me.initials}">ИИ</span>
+            <span class="userchip__name" th:text="${me.fullName}">Иванов Иван Иванович</span>
+        </a>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar__group">
+            <a class="navlink" th:href="@{/dashboard}"
+               th:classappend="${active == 'home'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-home"/></svg></span> Главная
+            </a>
+            <a class="navlink" th:href="@{/accounts}"
+               th:classappend="${active == 'accounts'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-wallet"/></svg></span> Счета и карты
+            </a>
+            <a class="navlink" th:href="@{/transfers}"
+               th:classappend="${active == 'transfers'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-transfer"/></svg></span> Переводы
+            </a>
+            <a class="navlink" th:href="@{/payments}"
+               th:classappend="${active == 'payments'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-receipt"/></svg></span> Платежи
+            </a>
+            <a class="navlink" th:href="@{/templates}"
+               th:classappend="${active == 'templates'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-bookmark"/></svg></span> Шаблоны
+            </a>
+        </div>
+
+        <div class="sidebar__group">
+            <p class="sidebar__caption">Для тестирования</p>
+            <a class="navlink navlink--muted" th:href="@{/dev/sms}"
+               th:classappend="${active == 'sms'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-sms"/></svg></span> Тестовые СМС
+            </a>
+            <a class="navlink navlink--muted" th:href="@{/swagger-ui}" target="_blank">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-doc"/></svg></span> Swagger UI
+            </a>
+            <a class="navlink navlink--muted" th:href="@{/admin}" sec:authorize="hasRole('ADMIN')"
+               th:classappend="${active == 'admin'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-settings"/></svg></span> Админка
+            </a>
+            <a class="navlink navlink--muted" th:href="@{/admin/chaos}" sec:authorize="hasRole('ADMIN')"
+               th:classappend="${active == 'chaos'} ? 'navlink--active'">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-flask"/></svg></span> Дефекты
+            </a>
+        </div>
+
+        <div class="sidebar__group">
+            <a class="navlink navlink--muted" th:href="@{/logout}">
+                <span class="navlink__icon"><svg class="icon"><use href="#i-logout"/></svg></span> Выход
+            </a>
+        </div>
+    </nav>
+</th:block>
+
+<!-- =================== Плашки успеха и ошибки ========================= -->
+<th:block th:fragment="alerts">
+    <div class="alert alert--ok" th:if="${success}">
+        <span class="alert__icon"><svg class="icon"><use href="#i-check"/></svg></span>
+        <span class="alert__body" th:text="${success}">Готово</span>
+    </div>
+    <div class="alert alert--danger" th:if="${error}">
+        <span class="alert__icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+        <span class="alert__body" th:text="${error}">Ошибка</span>
+    </div>
+    <div class="alert alert--info" th:if="${info}">
+        <span class="alert__icon"><svg class="icon"><use href="#i-info"/></svg></span>
+        <span class="alert__body" th:text="${info}">Сообщение</span>
+    </div>
+</th:block>
+
+<!-- ======================== Шапка публичных страниц =================== -->
+<header th:fragment="publicTop" class="public__top">
+    <a class="logo" th:href="@{/}"><span class="logo__mark">НТ</span> НТ-Банк</a>
+    <a class="btn btn--sm btn--ghost" th:href="@{/login}">Войти</a>
+    <a class="btn btn--sm btn--accent" th:href="@{/register}">Регистрация</a>
+</header>
+
+<!-- ============================ Пагинация ============================= -->
+<!-- page — объект Page<?>, baseUrl — адрес без параметра page -->
+<nav th:fragment="pager(page, baseUrl)" class="pager" th:if="${page.totalPages > 1}">
+    <a class="pager__item" th:href="@{${baseUrl}(page=${page.number - 1})}"
+       th:classappend="${page.first} ? 'pager__item--off'" rel="prev">←</a>
+
+    <a class="pager__item" th:each="i : ${#numbers.sequence(
+                 T(java.lang.Math).max(0, page.number - 2),
+                 T(java.lang.Math).min(page.totalPages - 1, page.number + 2))}"
+       th:href="@{${baseUrl}(page=${i})}"
+       th:classappend="${i == page.number} ? 'pager__item--active'"
+       th:text="${i + 1}">1</a>
+
+    <a class="pager__item" th:href="@{${baseUrl}(page=${page.number + 1})}"
+       th:classappend="${page.last} ? 'pager__item--off'" rel="next">→</a>
+
+    <span class="pager__info">
+        Страница <span th:text="${page.number + 1}">1</span> из <span th:text="${page.totalPages}">10</span>,
+        всего <span th:text="${page.totalElements}">0</span>
+    </span>
+</nav>
+
+</body>
+</html>

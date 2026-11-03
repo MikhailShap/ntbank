@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Выписка по счёту')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Выписка', 'accounts')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1 th:text="'Выписка — ' + ${account.title}">Выписка</h1>
+                    <p class="page-head__sub">
+                        <span class="mono" th:text="${account.number}">40817810...</span> ·
+                        остаток <span class="strong"
+                                      th:text="${@fmt.money(account.balance, account.currency)}">0 ₽</span>
+                    </p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/accounts}">
+                        <svg class="icon"><use href="#i-wallet"/></svg> Все счета
+                    </a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="card mb-2">
+                <form method="get" th:action="@{'/accounts/' + ${account.id} + '/statement'}" class="inline-form">
+                    <div class="field">
+                        <label for="from">Период с</label>
+                        <input class="input" type="date" id="from" name="from" th:value="${from}">
+                    </div>
+                    <div class="field">
+                        <label for="to">по</label>
+                        <input class="input" type="date" id="to" name="to" th:value="${to}">
+                    </div>
+                    <div class="field">
+                        <label for="sort">Сортировка</label>
+                        <select class="select" id="sort" name="sort">
+                            <option value="date_desc" th:selected="${sort == 'date_desc'}">Сначала новые</option>
+                            <option value="date_asc" th:selected="${sort == 'date_asc'}">Сначала старые</option>
+                            <option value="amount_desc" th:selected="${sort == 'amount_desc'}">Сумма по убыванию</option>
+                            <option value="amount_asc" th:selected="${sort == 'amount_asc'}">Сумма по возрастанию</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="size">На странице</label>
+                        <select class="select" id="size" name="size">
+                            <option value="10" th:selected="${size == 10}">10</option>
+                            <option value="20" th:selected="${size == 20}">20</option>
+                            <option value="50" th:selected="${size == 50}">50</option>
+                            <option value="100" th:selected="${size == 100}">100</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn" type="submit">
+                            <svg class="icon"><use href="#i-search"/></svg> Показать
+                        </button>
+                        <a class="btn btn--ghost" th:href="@{'/accounts/' + ${account.id} + '/statement'}">Сбросить</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card card--flush">
+                <div class="card__head">
+                    <h2>Операции</h2>
+                    <span class="badge badge--muted" th:text="'Найдено: ' + ${page.totalElements}">Найдено: 0</span>
+                </div>
+
+                <div class="table-wrap" th:if="${page.totalElements > 0}">
+                    <table class="tbl">
+                        <thead>
+                        <tr>
+                            <th>Операция</th>
+                            <th class="hide-sm">Контрагент</th>
+                            <th class="hide-sm">Дата</th>
+                            <th class="right">Сумма</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="op : ${page.content}">
+                            <td>
+                                <span class="op">
+                                    <span class="op__icon"
+                                          th:style="'color:' + (${op.incoming()} ? 'var(--money-in)' : 'var(--money-out)')">
+                                        <svg class="icon icon--sm"><use th:attr="href='#' + ${op.icon()}"/></svg>
+                                    </span>
+                                    <span>
+                                        <span class="op__title" th:text="${op.description}">Операция</span><br>
+                                        <span class="op__sub">
+                                            <span class="only-sm" th:text="${@fmt.dateTime(op.createdAt)} + ' · '"></span>
+                                            <span th:text="${op.kindTitle()}">Оплата</span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </td>
+                            <td class="muted hide-sm" th:text="${op.counterparty} ?: '—'">—</td>
+                            <td class="nowrap muted hide-sm" th:text="${@fmt.dateTime(op.createdAt)}">—</td>
+                            <td class="right">
+                                <span class="amount"
+                                      th:classappend="${op.incoming()} ? 'amount--in' : 'amount--out'"
+                                      th:text="${@fmt.signed(op)}">0 ₽</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty" th:if="${page.totalElements == 0}">
+                    <div class="empty__icon"><svg class="icon icon--xl"><use href="#i-doc"/></svg></div>
+                    <p class="empty__title">За выбранный период операций нет</p>
+                    <p>Измените даты или сбросьте фильтр.</p>
+                    <a class="btn btn--sm mt-2" th:href="@{'/accounts/' + ${account.id} + '/statement'}">
+                        Сбросить фильтр</a>
+                </div>
+
+                <div class="card__foot" th:if="${page.totalPages > 1}">
+                    <nav th:replace="~{fragments/layout :: pager(${page}, ${baseUrl})}"></nav>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

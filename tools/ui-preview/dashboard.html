@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Главная — НТ-Банк (превью стиля)</title>
+    <link rel="stylesheet" href="../../bank-app/src/main/resources/static/css/app.css">
+</head>
+<body>
+
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><path d="M15.5 15h2.5"/></symbol>
+    <symbol id="i-transfer" viewBox="0 0 24 24"><path d="M6.5 8h11"/><path d="M14.5 5 17.5 8l-3 3"/><path d="M17.5 16h-11"/><path d="M9.5 13 6.5 16l3 3"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8h5"/><path d="M9.5 12h5"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M7 3h10v18l-5-4-5 4z"/></symbol>
+    <symbol id="i-sms" viewBox="0 0 24 24"><path d="M4 5.5h16V16H9.5L4 20z"/><path d="M8 10h8"/><path d="M8 13h5"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4"/><path d="M9 12h10"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4h-4"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24"><path d="M17 7 7 17"/><path d="M7 10.5V17h6.5"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M17 13.5V7h-6.5"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><path d="M7 15h4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13"/><path d="M5.5 12h13"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.2 16.2 21 21"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M3 12h2.2M18.8 12H21M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></symbol>
+    <symbol id="i-mobile" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/><path d="M9.5 6h5"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M4 11l8-6 8 6"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/></symbol>
+</svg>
+
+<div class="app">
+    <input type="checkbox" id="nav" class="navcheck" aria-hidden="true">
+
+    <div class="brandbox">
+        <a class="logo" href="#"><span class="logo__mark">НТ</span> НТ-Банк</a>
+    </div>
+
+    <header class="topbar">
+        <label class="navtoggle" for="nav" title="Меню"><svg class="icon"><use href="#i-menu"/></svg></label>
+        <p class="topbar__title">Главная</p>
+        <span class="topbar__spacer"></span>
+        <a class="userchip" href="#">
+            <span class="userchip__avatar">ИИ</span>
+            <span class="userchip__name">Иванов Иван Иванович</span>
+        </a>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar__group">
+            <a class="navlink navlink--active" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-home"/></svg></span> Главная</a>
+            <a class="navlink" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-wallet"/></svg></span> Счета и карты</a>
+            <a class="navlink" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-transfer"/></svg></span> Переводы</a>
+            <a class="navlink" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-receipt"/></svg></span> Платежи</a>
+            <a class="navlink" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-bookmark"/></svg></span> Шаблоны</a>
+        </div>
+        <div class="sidebar__group">
+            <p class="sidebar__caption">Для тестирования</p>
+            <a class="navlink navlink--muted" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-sms"/></svg></span> Тестовые СМС</a>
+            <a class="navlink navlink--muted" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-settings"/></svg></span> Дефекты</a>
+        </div>
+        <div class="sidebar__group">
+            <a class="navlink navlink--muted" href="#"><span class="navlink__icon"><svg class="icon"><use href="#i-logout"/></svg></span> Выход</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Здравствуйте, Иванов Иван Иванович</h1>
+                    <p class="page-head__sub">20.10.2026, последний вход: 20.10.2026 09:14</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn" href="#"><svg class="icon"><use href="#i-transfer"/></svg> Перевести</a>
+                    <a class="btn btn--ghost" href="#"><svg class="icon"><use href="#i-receipt"/></svg> Оплатить услуги</a>
+                </div>
+            </div>
+
+            <div class="alert alert--ok">
+                <span class="alert__icon"><svg class="icon"><use href="#i-check"/></svg></span>
+                <span class="alert__body">
+                    <span class="alert__title">Перевод №3f7c21ab-9d44-4e18-b0c7-5a1e2d9f6b03 отправлен на обработку</span><br>
+                    Статус изменится в течение нескольких секунд.
+                </span>
+            </div>
+
+            <div class="grid grid--main">
+
+                <div class="stack">
+                    <div class="grid grid--2">
+                        <a class="acct" href="#">
+                            <div class="acct__top">
+                                <span class="acct__icon">₽</span>
+                                <span>
+                                    <span class="acct__title">Текущий счёт</span><br>
+                                    <span class="acct__num">•••• 4417</span>
+                                </span>
+                            </div>
+                            <div class="acct__balance">1 284 356,40 ₽</div>
+                            <div class="acct__hint">Доступно для перевода</div>
+                        </a>
+                        <a class="acct" href="#">
+                            <div class="acct__top">
+                                <span class="acct__icon acct__icon--usd">$</span>
+                                <span>
+                                    <span class="acct__title">Валютный счёт</span><br>
+                                    <span class="acct__num">•••• 8032</span>
+                                </span>
+                            </div>
+                            <div class="acct__balance">$ 3 150,00</div>
+                            <div class="acct__hint">≈ 291 375,00 ₽ по курсу 92,50</div>
+                        </a>
+                    </div>
+
+                    <div class="card card--flush">
+                        <div class="card__head">
+                            <h2>Последние операции</h2>
+                            <a class="card__link" href="#">Вся выписка <svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></a>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="tbl">
+                                <thead>
+                                <tr>
+                                    <th>Операция</th>
+                                    <th class="hide-sm">Дата</th>
+                                    <th class="right">Сумма</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon" style="color:var(--money-in)"><svg class="icon icon--sm"><use href="#i-in"/></svg></span>
+                                            <span><span class="op__title">Зарплата, ООО «Вектор-Т»</span><br><span class="op__sub"><span class="only-sm">20.10.2026 09:02 · </span>Поступление</span></span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm">20.10.2026 09:02</td>
+                                    <td class="right"><span class="amount amount--in">+128 400,00 ₽</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon" style="color:var(--money-out)"><svg class="icon icon--sm"><use href="#i-mobile"/></svg></span>
+                                            <span><span class="op__title">Мобильная связь, «Волна Мобайл»</span><br><span class="op__sub"><span class="only-sm">19.10.2026 21:44 · </span>Оплата услуг · 9031234567</span></span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm">19.10.2026 21:44</td>
+                                    <td class="right"><span class="amount amount--out">−750,00 ₽</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon" style="color:var(--money-out)"><svg class="icon icon--sm"><use href="#i-transfer"/></svg></span>
+                                            <span><span class="op__title">Перевод по телефону +7 900 000 0042</span><br><span class="op__sub"><span class="only-sm">19.10.2026 18:10 · </span>Петров П. П.</span></span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm">19.10.2026 18:10</td>
+                                    <td class="right"><span class="amount amount--out">−5 000,00 ₽</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon" style="color:var(--money-out)"><svg class="icon icon--sm"><use href="#i-house"/></svg></span>
+                                            <span><span class="op__title">ЖКХ, «Горсвет»</span><br><span class="op__sub"><span class="only-sm">18.10.2026 12:31 · </span>Оплата услуг · 770041289</span></span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm">18.10.2026 12:31</td>
+                                    <td class="right"><span class="amount amount--out">−3 412,75 ₽</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon" style="color:var(--money-in)"><svg class="icon icon--sm"><use href="#i-in"/></svg></span>
+                                            <span><span class="op__title">Перевод между своими счетами</span><br><span class="op__sub"><span class="only-sm">17.10.2026 08:55 · </span>С валютного счёта, курс 92,50</span></span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm">17.10.2026 08:55</td>
+                                    <td class="right"><span class="amount amount--in">+18 500,00 ₽</span></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card__foot small muted">
+                            Показаны последние 5 операций из 164. Полная история — на странице выписки с фильтром по датам.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack">
+                    <div class="plastic">
+                        <div class="plastic__row">
+                            <span class="plastic__kind">Дебетовая карта</span>
+                            <span class="plastic__chip"></span>
+                        </div>
+                        <div class="plastic__pan">5536 •••• •••• 4417</div>
+                        <div class="plastic__row">
+                            <span>
+                                <span class="plastic__kind">Баланс</span><br>
+                                <span class="plastic__balance">1 284 356,40 ₽</span>
+                            </span>
+                            <span class="small" style="opacity:.8">до 09/29</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Быстрые действия</h3>
+                        <div class="stack" style="gap:10px">
+                            <a class="quick" href="#">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-transfer"/></svg></span>
+                                По номеру телефона
+                                <span style="margin-left:auto;color:var(--ink-400)"><svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                            <a class="quick" href="#">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-wallet"/></svg></span>
+                                Между своими счетами
+                                <span style="margin-left:auto;color:var(--ink-400)"><svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                            <a class="quick" href="#">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-bolt"/></svg></span>
+                                Повторить по шаблону
+                                <span style="margin-left:auto;color:var(--ink-400)"><svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="row" style="justify-content:space-between">
+                            <div class="metric">
+                                <span class="metric__label">Курс доллара НТ-Банка</span>
+                                <span class="metric__value">92,50 ₽</span>
+                            </div>
+                            <span class="badge badge--info"><svg class="icon icon--sm"><use href="#i-chart"/></svg> покупка/продажа</span>
+                        </div>
+                        <p class="small muted mt-2 mb-0">Курс используется при переводе между своими счетами в разных валютах.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Переводы в обработке</h3>
+                        <div class="row" style="justify-content:space-between">
+                            <span class="small muted">№3f7c21ab… · 5 000,00 ₽</span>
+                            <span class="badge badge--warn"><span class="dot"></span> В обработке</span>
+                        </div>
+                        <div class="row mt-2" style="justify-content:space-between">
+                            <span class="small muted">№a1b9e740… · 12 300,00 ₽</span>
+                            <span class="badge badge--ok"><svg class="icon icon--sm"><use href="#i-check"/></svg> Выполнен</span>
+                        </div>
+                        <div class="row mt-2" style="justify-content:space-between">
+                            <span class="small muted">№7c02dd13… · 90 000,00 ₽</span>
+                            <span class="badge badge--danger">Отклонён</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

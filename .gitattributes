@@ -1,0 +1,7 @@
+# Проект собирается и работает в Linux-контейнерах: во всех текстовых файлах переводы строк LF,
+# в том числе при клонировании на Windows. Иначе mvnw и users.csv получили бы CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary

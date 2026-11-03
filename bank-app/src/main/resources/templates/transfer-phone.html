@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Перевод по телефону')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Перевод по телефону', 'transfers')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Перевод по номеру телефона</h1>
+                    <p class="page-head__sub">Получатель должен быть клиентом НТ-Банка</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/transfers}">Все переводы</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--main">
+                <div class="card">
+                    <form method="post" th:action="@{/transfers/phone}" class="form-grid">
+                        <div class="field" th:classappend="${fieldErrors?.get('fromAccountId')} ? 'field--invalid'">
+                            <label for="fromAccountId">Счёт списания</label>
+                            <select class="select" id="fromAccountId" name="fromAccountId" required>
+                                <option th:each="account : ${accounts}"
+                                        th:value="${account.id}"
+                                        th:selected="${account.id == selectedAccountId}"
+                                        th:text="${account.title} + ' · ' + ${account.masked()} + ' · ' +
+                                                 ${@fmt.money(account.balance, account.currency)}">Счёт</option>
+                            </select>
+                            <span class="field__error" th:if="${fieldErrors?.get('fromAccountId')}"
+                                  th:text="${fieldErrors?.get('fromAccountId')}">Ошибка</span>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('phone')} ? 'field--invalid'">
+                            <label for="phone">Телефон получателя</label>
+                            <input class="input input--lg" type="tel" id="phone" name="phone"
+                                   th:value="${phone}" placeholder="+7 900 000 0042" required autofocus>
+                            <span class="field__hint">
+                                Телефоны тестовых клиентов: от +7 900 000 0001 до +7 900 000 1000
+                                (логин <code class="inline">user0001</code> — телефон +7 900 000 0001)
+                            </span>
+                            <span class="field__error" th:if="${fieldErrors?.get('phone')}"
+                                  th:text="${fieldErrors?.get('phone')}">Ошибка</span>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('amount')} ? 'field--invalid'">
+                            <label for="amount">Сумма</label>
+                            <input class="input input--lg" type="number" id="amount" name="amount"
+                                   th:value="${amount}" min="1" step="0.01" placeholder="5000" required>
+                            <span class="field__hint" th:text="'Лимит одной операции: ' + ${@fmt.money(limit, 'RUB')}">
+                                Лимит</span>
+                            <span class="field__error" th:if="${fieldErrors?.get('amount')}"
+                                  th:text="${fieldErrors?.get('amount')}">Ошибка</span>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('comment')} ? 'field--invalid'">
+                            <label for="comment">Сообщение получателю (необязательно)</label>
+                            <input class="input" type="text" id="comment" name="comment"
+                                   th:value="${comment}" maxlength="160" placeholder="За обед">
+                            <span class="field__error" th:if="${fieldErrors?.get('comment')}"
+                                  th:text="${fieldErrors?.get('comment')}">Ошибка</span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn--lg" type="submit">Продолжить</button>
+                            <a class="btn btn--ghost" th:href="@{/dashboard}">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="stack">
+                    <div class="card">
+                        <h3>Как это работает</h3>
+                        <ol class="muted" style="padding-left:20px;margin:0">
+                            <li>Банк создаёт черновик перевода и просит подтвердить его кодом.</li>
+                            <li>Код «уходит» СМС на ваш телефон — настоящие сообщения стенд
+                                не отправляет, их видно на странице
+                                <a th:href="@{/dev/sms}">Тестовые СМС</a>.</li>
+                            <li>После ввода кода перевод уходит в обработку со статусом «В обработке».</li>
+                            <li>Через 1–5 секунд статус становится «Выполнен» или «Отклонён».</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

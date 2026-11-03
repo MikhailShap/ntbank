@@ -1,0 +1,2686 @@
+{
+  "uid": "ntbank-main",
+  "title": "НТ-Банк",
+  "description": "Приложение, JVM, пулы, Kafka, переводы и PostgreSQL. Сверху — какие дефекты включены.",
+  "tags": [
+    "ntbank",
+    "нагрузочное тестирование"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "uri",
+        "label": "Эндпоинт",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\"}, uri)",
+          "refId": "uri"
+        },
+        "definition": "label_values(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\"}, uri)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Обзор",
+      "id": 1,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Запросов в секунду",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\"}[1m]))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Ошибки 5xx",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", status=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\"}[1m]))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Время ответа p95",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\"}[1m])))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Heap занят",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(jvm_memory_used_bytes{application=\"bank-app\", area=\"heap\"}) / max(jvm_memory_max_bytes{application=\"bank-app\", area=\"heap\", id=~\".*Old Gen\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Переводов в обработке",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(ntbank_transfers{application=\"bank-app\", status=\"PROCESSING\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Лаг Kafka",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kafka_consumergroup_lag{consumergroup=\"nt-bank-processor\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "state-timeline",
+      "title": "Включённые дефекты",
+      "description": "Красная полоса — дефект включён на странице /admin/chaos. Сопоставляйте её с остальными графиками по времени.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (defect) (ntbank_chaos_active{application=\"bank-app\"})",
+          "legendFormat": "{{defect}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#e8f5ee",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "выкл",
+                  "color": "#e8f5ee",
+                  "index": 0
+                },
+                "1": {
+                  "text": "ВКЛЮЧЁН",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "custom": {
+            "fillOpacity": 85,
+            "lineWidth": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "rowHeight": 0.85,
+        "alignValue": "left",
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 8
+      }
+    },
+    {
+      "type": "row",
+      "title": "HTTP: запросы и время ответа",
+      "id": 9,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Запросов в секунду по эндпоинтам",
+      "description": "Пропускная способность каждого эндпоинта банка.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (method, uri) (rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval]))",
+          "legendFormat": "{{method}} {{uri}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 9
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Время ответа p95 по эндпоинтам",
+      "description": "95% запросов к эндпоинту укладываются в это время.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, method, uri) (rate(http_server_requests_seconds_bucket{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval])))",
+          "legendFormat": "{{method}} {{uri}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 9
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Время ответа: p50, p95, p99 (выбранные эндпоинты)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval])))",
+          "legendFormat": "p50",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval])))",
+          "legendFormat": "p95",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval])))",
+          "legendFormat": "p99",
+          "refId": "C",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ответы по кодам",
+      "description": "429 — сработало ограничение частоты, 500 — ошибки, в том числе намеренные.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval]))",
+          "legendFormat": "{{status}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 40,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^2..$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^3..$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^4..$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^5..$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Доля ошибок",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\", status=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval]))",
+          "legendFormat": "5xx",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\", status=~\"4..\"}[$__rate_interval])) or vector(0)) / sum(rate(http_server_requests_seconds_count{application=\"bank-app\", uri!~\"/actuator.*|/\\\\*\\\\*|/css/.*|/js/.*|/favicon.*|NOT_FOUND|UNKNOWN|/admin.*|/api/admin/.*|/api/dev/reset\", uri=~\"$uri\"}[$__rate_interval]))",
+          "legendFormat": "4xx",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 14,
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 7
+      }
+    },
+    {
+      "type": "row",
+      "title": "JVM банка",
+      "id": 15,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap и утечка памяти",
+      "description": "При утечке «занято» растёт пилой вверх, нижняя граница пилы поднимается. Когда она подходит к максимуму — скоро OutOfMemoryError.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(jvm_memory_used_bytes{application=\"bank-app\", area=\"heap\"})",
+          "legendFormat": "занято",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(jvm_memory_committed_bytes{application=\"bank-app\", area=\"heap\"})",
+          "legendFormat": "выделено JVM",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(jvm_memory_max_bytes{application=\"bank-app\", area=\"heap\", id=~\".*Old Gen\"})",
+          "legendFormat": "максимум (-Xmx)",
+          "refId": "C",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "ntbank_chaos_leaked_bytes{application=\"bank-app\"}",
+          "legendFormat": "накоплено утечкой",
+          "refId": "D",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "максимум (-Xmx)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "накоплено утечкой"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Сборки мусора в секунду",
+      "description": "При утечке памяти сборки учащаются, а освобождают всё меньше.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (gc) (rate(jvm_gc_pause_seconds_count{application=\"bank-app\"}[$__rate_interval]))",
+          "legendFormat": "{{gc}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 17,
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Доля времени в сборке мусора",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{application=\"bank-app\"}[$__rate_interval]))",
+          "legendFormat": "время в GC",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 18,
+      "gridPos": {
+        "x": 18,
+        "y": 39,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU процесса и системы",
+      "description": "Дефект «Нагрузка на CPU» загоняет процесс в полку.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "process_cpu_usage{application=\"bank-app\"}",
+          "legendFormat": "процесс банка",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "system_cpu_usage{application=\"bank-app\"}",
+          "legendFormat": "вся система",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 19,
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Потоки JVM",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "jvm_threads_live_threads{application=\"bank-app\"}",
+          "legendFormat": "живые",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "jvm_threads_daemon_threads{application=\"bank-app\"}",
+          "legendFormat": "фоновые",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "jvm_threads_peak_threads{application=\"bank-app\"}",
+          "legendFormat": "пик",
+          "refId": "C",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 20,
+      "gridPos": {
+        "x": 12,
+        "y": 47,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "row",
+      "title": "Пулы: соединения к БД и потоки Tomcat",
+      "id": 21,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 54,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Пул соединений к БД (HikariCP)",
+      "description": "Если «ждут соединения» больше нуля — потоки стоят в очереди за соединением. Типично при маленьком пуле, медленном SQL и N+1.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hikaricp_connections_active{application=\"bank-app\"})",
+          "legendFormat": "активные",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hikaricp_connections_idle{application=\"bank-app\"})",
+          "legendFormat": "свободные",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hikaricp_connections_pending{application=\"bank-app\"})",
+          "legendFormat": "ждут соединения",
+          "refId": "C",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hikaricp_connections_max{application=\"bank-app\"})",
+          "legendFormat": "максимум пула",
+          "refId": "D",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ждут соединения"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "максимум пула"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 22,
+      "gridPos": {
+        "x": 0,
+        "y": 55,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Время ожидания соединения из пула",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(hikaricp_connections_acquire_seconds_sum{application=\"bank-app\"}[$__rate_interval])) / sum(rate(hikaricp_connections_acquire_seconds_count{application=\"bank-app\"}[$__rate_interval]))",
+          "legendFormat": "среднее ожидание",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(hikaricp_connections_timeout_total{application=\"bank-app\"}[$__rate_interval]))",
+          "legendFormat": "таймаутов в секунду",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 23,
+      "gridPos": {
+        "x": 12,
+        "y": 55,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Потоки Tomcat",
+      "description": "Когда «заняты» упираются в «максимум», новые запросы ждут в очереди перед приложением. Серверное время ответа (http_server_requests) эту очередь НЕ видит — оно считается с момента, когда поток уже взял запрос. Рост времени ответа в этом случае видно только у клиента: на дашборде JMeter.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(tomcat_threads_busy_threads{application=\"bank-app\"})",
+          "legendFormat": "заняты",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(tomcat_threads_current_threads{application=\"bank-app\"})",
+          "legendFormat": "созданы",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(tomcat_threads_config_max_threads{application=\"bank-app\"})",
+          "legendFormat": "максимум",
+          "refId": "C",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "максимум"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 24,
+      "gridPos": {
+        "x": 18,
+        "y": 55,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "row",
+      "title": "Kafka, переводы и «Антифрод»",
+      "id": 25,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 63,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Сообщения Kafka в секунду",
+      "description": "Если «записано» больше «разобрано» — очередь копится, лаг растёт.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(kafka_topic_partition_current_offset{topic=\"nt-bank.transfers\"}[$__rate_interval]))",
+          "legendFormat": "записано в топик",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(kafka_consumergroup_current_offset{consumergroup=\"nt-bank-processor\", topic=\"nt-bank.transfers\"}[$__rate_interval]))",
+          "legendFormat": "разобрано консьюмером",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 26,
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Лаг консьюмера Kafka",
+      "description": "Сколько событий о переводах ещё не разобрано. Растёт при паузе или замедлении консьюмера.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kafka_consumergroup_lag{consumergroup=\"nt-bank-processor\"})",
+          "legendFormat": "сообщений в очереди",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 27,
+      "gridPos": {
+        "x": 8,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Время обработки перевода (от подтверждения до финального статуса)",
+      "description": "Штатно 1–5 секунд. Растёт, когда тормозит «Антифрод» или стоит консьюмер Kafka.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(ntbank_transfer_processing_seconds_bucket{application=\"bank-app\"}[$__rate_interval])))",
+          "legendFormat": "p50",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ntbank_transfer_processing_seconds_bucket{application=\"bank-app\"}[$__rate_interval])))",
+          "legendFormat": "p95",
+          "refId": "B",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(ntbank_transfer_processing_seconds_bucket{application=\"bank-app\"}[$__rate_interval])))",
+          "legendFormat": "p99",
+          "refId": "C",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 28,
+      "gridPos": {
+        "x": 16,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Переводы по статусам (всего в базе)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (ntbank_transfers{application=\"bank-app\"})",
+          "legendFormat": "{{status}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DONE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REJECTED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PROCESSING"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRAFT"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EXPIRED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "id": 29,
+      "gridPos": {
+        "x": 0,
+        "y": 72,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Завершённые переводы в секунду",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (rate(ntbank_transfers_finished_total{application=\"bank-app\"}[$__rate_interval]))",
+          "legendFormat": "{{status}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 40,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DONE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REJECTED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EXPIRED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 30,
+      "gridPos": {
+        "x": 8,
+        "y": 72,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "«Антифрод»: проверки и время ответа",
+      "description": "failed — внешняя система ответила ошибкой (дефект «Тормозит Антифрод»).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (result) (rate(antifraud_checks_total[$__rate_interval]))",
+          "legendFormat": "{{result}}",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"antifraud-stub\", uri=\"/api/antifraud/check\"}[$__rate_interval])))",
+          "legendFormat": "p95 ответа, с",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "approved"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rejected"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 31,
+      "gridPos": {
+        "x": 16,
+        "y": 72,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "row",
+      "title": "PostgreSQL",
+      "id": 32,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 80,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Обращения к таблице операций",
+      "description": "N+1: чтений по индексу в разы больше, чем запросов выписки. «Нет индекса»: чтения по индексу пропадают, появляются полные переборы.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(pg_stat_user_tables_idx_scan{relname=\"operation\"}[$__rate_interval]))",
+          "legendFormat": "чтений по индексу в секунду",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(pg_stat_user_tables_seq_scan{relname=\"operation\"}[$__rate_interval]))",
+          "legendFormat": "полных переборов в секунду",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "полных переборов в секунду"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 33,
+      "gridPos": {
+        "x": 0,
+        "y": 81,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Строк прочитано полным перебором в секунду",
+      "description": "Главный признак отсутствующего индекса: база перебирает миллионы строк.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(pg_stat_user_tables_seq_tup_read{relname=\"operation\"}[$__rate_interval]))",
+          "legendFormat": "строк в секунду",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 34,
+      "gridPos": {
+        "x": 8,
+        "y": 81,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Транзакции и активные запросы",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(pg_stat_database_xact_commit{datname=\"ntbank\"}[$__rate_interval]))",
+          "legendFormat": "транзакций в секунду",
+          "refId": "A",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(pg_stat_activity_count{datname=\"ntbank\", state=\"active\"})",
+          "legendFormat": "активных запросов",
+          "refId": "B",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 35,
+      "gridPos": {
+        "x": 16,
+        "y": 81,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Операций в истории",
+      "description": "Нарастить можно на странице /admin.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(ntbank_operations_estimate{application=\"bank-app\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 36,
+      "gridPos": {
+        "x": 0,
+        "y": 89,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Размер базы",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(pg_database_size_bytes{datname=\"ntbank\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 37,
+      "gridPos": {
+        "x": 4,
+        "y": 89,
+        "w": 4,
+        "h": 4
+      }
+    }
+  ]
+}

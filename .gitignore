@@ -1,0 +1,22 @@
+# Сборка
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Результаты JMeter, если запускать тесты из папки проекта
+*.jtl
+jmeter.log
+report/
+
+# Python
+__pycache__/
+
+# Превью дизайна, собирается локально
+tools/ui-preview/dashboard-standalone.html
+
+# .env НЕ игнорируется намеренно: в нём профиль запуска (COMPOSE_PROFILES=full), без него
+# `docker compose up` не поднимет банк. Секретов в нём нет.

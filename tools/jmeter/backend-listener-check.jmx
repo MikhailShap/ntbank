@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Проверка связки JMeter -> InfluxDB -> Grafana. Это НЕ сценарий нагрузки на банк:
+  только публичные страницы без входа и корреляции, плюс запрос к REST без токена —
+  он всегда получает 401, чтобы на дашборде было видно ошибки.
+
+  Запуск из консоли (JMeter 5.6.3):
+    jmeter -n -t tools/jmeter/backend-listener-check.jmx -l result.jtl
+
+  Затем откройте в Grafana дашборд «JMeter + НТ-Банк» и выберите тест ntbank-check.
+-->
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Проверка Backend Listener">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="Переменные">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="host" elementType="Argument">
+            <stringProp name="Argument.name">host</stringProp>
+            <stringProp name="Argument.value">${__P(host,localhost)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="influx" elementType="Argument">
+            <stringProp name="Argument.name">influx</stringProp>
+            <stringProp name="Argument.value">${__P(influx,http://localhost:8086)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="Настройки HTTP по умолчанию">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Параметры">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.domain">${host}</stringProp>
+        <stringProp name="HTTPSampler.port">8080</stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
+        <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout">5000</stringProp>
+        <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Посетители">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Цикл">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,10)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(rampup,20)}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${__P(duration,60)}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Главная страница">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Параметры">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Страница входа">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Параметры">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/login</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Тестовые СМС">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Параметры">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/dev/sms</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Счета без токена (ожидаемая ошибка 401)">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Параметры">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.path">/api/v1/accounts</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Пауза 300 мс">
+          <stringProp name="ConstantTimer.delay">300</stringProp>
+        </ConstantTimer>
+        <hashTree/>
+      </hashTree>
+
+      <BackendListener guiclass="BackendListenerGui" testclass="BackendListener" testname="Backend Listener → InfluxDB">
+        <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
+          <collectionProp name="Arguments.arguments">
+            <elementProp name="influxdbMetricsSender" elementType="Argument">
+              <stringProp name="Argument.name">influxdbMetricsSender</stringProp>
+              <stringProp name="Argument.value">org.apache.jmeter.visualizers.backend.influxdb.HttpMetricsSender</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="influxdbUrl" elementType="Argument">
+              <stringProp name="Argument.name">influxdbUrl</stringProp>
+              <stringProp name="Argument.value">${influx}/write?db=jmeter</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="application" elementType="Argument">
+              <stringProp name="Argument.name">application</stringProp>
+              <stringProp name="Argument.value">ntbank-check</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="measurement" elementType="Argument">
+              <stringProp name="Argument.name">measurement</stringProp>
+              <stringProp name="Argument.value">jmeter</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="summaryOnly" elementType="Argument">
+              <stringProp name="Argument.name">summaryOnly</stringProp>
+              <stringProp name="Argument.value">false</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="samplersRegex" elementType="Argument">
+              <stringProp name="Argument.name">samplersRegex</stringProp>
+              <stringProp name="Argument.value">.*</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="percentiles" elementType="Argument">
+              <stringProp name="Argument.name">percentiles</stringProp>
+              <stringProp name="Argument.value">90;95;99</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="testTitle" elementType="Argument">
+              <stringProp name="Argument.name">testTitle</stringProp>
+              <stringProp name="Argument.value">Проверка Backend Listener</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="eventTags" elementType="Argument">
+              <stringProp name="Argument.name">eventTags</stringProp>
+              <stringProp name="Argument.value"></stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+          </collectionProp>
+        </elementProp>
+        <stringProp name="classname">org.apache.jmeter.visualizers.backend.influxdb.InfluxdbBackendListenerClient</stringProp>
+      </BackendListener>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

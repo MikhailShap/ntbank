@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Дефекты')}"></head>
+<body class="tech">
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Режим «Дефекты»', 'chaos')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <p class="tech__title">NT-BANK · FAULT INJECTION</p>
+                    <h1>Дефекты</h1>
+                    <p class="page-head__sub">
+                        Настройки применяются сразу, перезапуск не нужен.
+                        Админка, метрики и служебные адреса дефектами не затрагиваются.
+                    </p>
+                </div>
+                <div class="page-head__actions">
+                    <form method="post" th:action="@{/admin/chaos/reset}">
+                        <button class="btn btn--danger" type="submit">
+                            <svg class="icon"><use href="#i-refresh"/></svg> Выключить всё
+                        </button>
+                    </form>
+                    <a class="btn btn--ghost" th:href="@{/admin}">Состояние стенда</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="alert alert--warn" th:if="${chaos.anyEnabled}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+                <span class="alert__body">
+                    <span class="alert__title">Стенд работает не в штатном режиме</span><br>
+                    Включён хотя бы один дефект. Перед эталонным прогоном нажмите «Выключить всё».
+                </span>
+            </div>
+            <div class="alert alert--info" th:unless="${chaos.anyEnabled}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-check"/></svg></span>
+                <span class="alert__body">
+                    Все дефекты выключены, стенд в штатном режиме.
+                    Обработка переводов: <span class="strong" th:text="${chaos.asyncMode}">kafka</span>,
+                    антифрод: <span class="strong" th:text="${chaos.antifraudMode}">http</span>.
+                </span>
+            </div>
+
+            <div class="grid grid--2">
+
+                <!-- ====================== Задержка ====================== -->
+                <form method="post" th:action="@{/admin/chaos/latency}" class="card chaos-card"
+                      th:classappend="${chaos.latencyEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.latencyEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Задержка ответа</div>
+                            <div class="chaos-card__desc">
+                                Добавляет случайную паузу к каждому запросу.
+                                Видно по росту времени отклика и перцентилей.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Эндпоинты</label>
+                            <select class="select" name="target">
+                                <option th:each="t : ${targets}" th:value="${t.name()}"
+                                        th:text="${t.title}"
+                                        th:selected="${t.name() == chaos.latencyTarget}">Все</option>
+                            </select>
+                        </div>
+                        <div class="row" style="gap:10px;flex-wrap:nowrap">
+                            <div class="field" style="flex:1">
+                                <label>От, мс</label>
+                                <input class="input" type="number" name="minMs" min="0" max="60000"
+                                       th:value="${chaos.latencyMinMs}">
+                            </div>
+                            <div class="field" style="flex:1">
+                                <label>До, мс</label>
+                                <input class="input" type="number" name="maxMs" min="0" max="60000"
+                                       th:value="${chaos.latencyMaxMs}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Ошибки ====================== -->
+                <form method="post" th:action="@{/admin/chaos/errors}" class="card chaos-card"
+                      th:classappend="${chaos.errorsEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.errorsEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Ошибки 500</div>
+                            <div class="chaos-card__desc">
+                                Доля запросов, которым сервер отвечает ошибкой.
+                                Видно по росту Error % в отчёте.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Эндпоинты</label>
+                            <select class="select" name="target">
+                                <option th:each="t : ${targets}" th:value="${t.name()}"
+                                        th:text="${t.title}"
+                                        th:selected="${t.name() == chaos.errorsTarget}">Все</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Доля ошибок, %</label>
+                            <input class="input" type="number" name="percent" min="0" max="100"
+                                   th:value="${chaos.errorPercent}">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Медленный SQL ====================== -->
+                <form method="post" th:action="@{/admin/chaos/slow-sql}" class="card chaos-card"
+                      th:classappend="${chaos.slowSqlEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.slowSqlEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Медленный SQL в выписке</div>
+                            <div class="chaos-card__desc">
+                                Три типичные ошибки работы с базой. Затрагивают
+                                <code class="inline">/accounts/{id}/statement</code> и
+                                <code class="inline">/api/v1/accounts/{id}/statement</code>.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Режим</label>
+                        <select class="select" name="mode">
+                            <option th:each="m : ${slowSqlModes}" th:value="${m.name()}"
+                                    th:text="${m.title}"
+                                    th:selected="${m.name() == chaos.slowSqlMode}">Режим</option>
+                        </select>
+                    </div>
+                    <ul class="small muted" style="margin:0;padding-left:18px">
+                        <li th:each="m : ${slowSqlModes}">
+                            <span class="strong" th:text="${m.title}">Режим</span> —
+                            <span th:text="${m.description}">описание</span>
+                        </li>
+                    </ul>
+                    <dl class="kv">
+                        <dt>Индекс выписки</dt>
+                        <dd>
+                            <span class="badge badge--ok" th:if="${chaos.statementIndexPresent}">есть</span>
+                            <span class="badge badge--danger" th:unless="${chaos.statementIndexPresent}">удалён</span>
+                        </dd>
+                        <dt>Операций в базе</dt>
+                        <dd th:text="'≈ ' + ${#numbers.formatInteger(chaos.operationsEstimate, 1, 'WHITESPACE')}">≈ 0</dd>
+                    </dl>
+                    <p class="small muted mb-0" th:if="${chaos.operationsEstimate < 1000000}">
+                        На текущем объёме режим «Нет индекса» почти незаметен.
+                        Нарастите историю до 2–5 млн операций на странице
+                        <a th:href="@{/admin}">Состояние стенда</a>.
+                    </p>
+                    <p class="small muted mb-0">
+                        В режиме «Тяжёлое вычисление» сортировка всегда по дате, по убыванию.
+                        Создание индекса обратно на миллионах строк занимает несколько секунд.
+                    </p>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Утечка памяти ====================== -->
+                <form method="post" th:action="@{/admin/chaos/leak}" class="card chaos-card"
+                      th:classappend="${chaos.leakEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.leakEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Утечка памяти</div>
+                            <div class="chaos-card__desc">
+                                Каждый запрос оставляет объект в коллекции, которую никто не чистит.
+                                Растёт heap, учащаются сборки мусора, в длительном тесте — OutOfMemoryError.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Эндпоинты</label>
+                            <select class="select" name="target">
+                                <option th:each="t : ${targets}" th:value="${t.name()}"
+                                        th:text="${t.title}"
+                                        th:selected="${t.name() == chaos.leakTarget}">Все</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Размер утечки на запрос, КБ</label>
+                            <input class="input" type="number" name="kbPerRequest" min="1" max="10240"
+                                   th:value="${chaos.leakKbPerRequest}">
+                            <span class="field__hint">Скорость утечки = размер × запросов в секунду</span>
+                        </div>
+                    </div>
+                    <dl class="kv">
+                        <dt>Накоплено утечкой</dt>
+                        <dd th:text="${chaos.leakedMb()} + ' МБ в ' + ${chaos.leakedChunks} + ' объектах ('
+                                     + ${chaos.leakedPercentOfHeap()} + '% от максимума heap)'">0 МБ</dd>
+                        <dt>Занято heap сейчас</dt>
+                        <dd th:text="${chaos.heapUsedMb()} + ' из ' + ${chaos.heapMaxMb()} + ' МБ'">0 из 512 МБ</dd>
+                        <th:block th:if="${chaos.minutesUntilHeapFull() >= 0}">
+                            <dt>Скорость роста</dt>
+                            <dd th:text="${#numbers.formatDecimal(chaos.leakMbPerMinute(), 1, 1, 'COMMA')} + ' МБ/мин'">0 МБ/мин</dd>
+                            <dt>До заполнения heap</dt>
+                            <dd th:text="'≈ ' + ${chaos.minutesUntilHeapFull()} + ' мин'">≈ 0 мин</dd>
+                        </th:block>
+                    </dl>
+                    <p class="small muted mb-0">
+                        Скорость зависит от нагрузки: 50 КБ на все запросы при 180 запросах в секунду —
+                        это 9 МБ/с, heap кончится за минуту. Для часового теста при 70% профиля выберите
+                        «Вход» и 10 КБ, а через 5–10 минут подправьте размер по строке «До заполнения heap».
+                    </p>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                        <button class="btn btn--sm btn--ghost" type="submit"
+                                th:formaction="@{/admin/chaos/leak/clear}">Очистить накопленное</button>
+                    </div>
+                </form>
+
+                <!-- ====================== CPU ====================== -->
+                <form method="post" th:action="@{/admin/chaos/cpu}" class="card chaos-card"
+                      th:classappend="${chaos.cpuEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.cpuEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Нагрузка на CPU</div>
+                            <div class="chaos-card__desc">
+                                Тяжёлое вычисление в обработчике запроса.
+                                Процессор уходит в полку, время ответа растёт у всех запросов сразу.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Эндпоинты</label>
+                            <select class="select" name="target">
+                                <option th:each="t : ${targets}" th:value="${t.name()}"
+                                        th:text="${t.title}"
+                                        th:selected="${t.name() == chaos.cpuTarget}">Все</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Счёт на запрос, мс</label>
+                            <input class="input" type="number" name="millis" min="1" max="10000"
+                                   th:value="${chaos.cpuMillis}">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Пулы ====================== -->
+                <form method="post" th:action="@{/admin/chaos/pools}" class="card chaos-card"
+                      th:classappend="${chaos.hikariMaxPoolSize != chaos.hikariDefaultPoolSize
+                                     or chaos.tomcatMaxThreads != chaos.tomcatDefaultThreads}
+                                     ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <div>
+                            <div class="chaos-card__title">Пулы: соединения к БД и потоки Tomcat</div>
+                            <div class="chaos-card__desc">
+                                Маленький пул HikariCP — очередь за соединениями и таймауты.
+                                Маленький пул потоков Tomcat — очередь запросов и закон Литтла вживую.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Соединений к БД (HikariCP)</label>
+                            <input class="input" type="number" name="hikariMaxPoolSize" min="1" max="90"
+                                   th:value="${chaos.hikariMaxPoolSize}">
+                            <span class="field__hint"
+                                  th:text="'при старте было ' + ${chaos.hikariDefaultPoolSize}">—</span>
+                        </div>
+                        <div class="field">
+                            <label>Потоков Tomcat</label>
+                            <input class="input" type="number" name="tomcatMaxThreads" min="1" max="1000"
+                                   th:value="${chaos.tomcatMaxThreads}">
+                            <span class="field__hint"
+                                  th:text="'при старте было ' + ${chaos.tomcatDefaultThreads}">—</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Антифрод ====================== -->
+                <form method="post" th:action="@{/admin/chaos/antifraud}" class="card chaos-card"
+                      th:classappend="${chaos.antifraudEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.antifraudEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Тормозит «Антифрод»</div>
+                            <div class="chaos-card__desc">
+                                Задержка и ошибки во внешней системе. Переводы дольше висят
+                                в статусе «В обработке» или отклоняются.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert--warn mb-0" th:if="${chaos.antifraudMode != 'http'}"
+                         style="margin-bottom:0">
+                        <span class="alert__icon"><svg class="icon"><use href="#i-info"/></svg></span>
+                        <span class="alert__body">
+                            Внешний сервис не подключён: работают локальные правила,
+                            настройки применять некуда.
+                        </span>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="row" style="gap:10px;flex-wrap:nowrap">
+                            <div class="field" style="flex:1">
+                                <label>Задержка от, мс</label>
+                                <input class="input" type="number" name="delayMinMs" min="0" max="60000"
+                                       th:value="${chaos.antifraudDelayMinMs}">
+                            </div>
+                            <div class="field" style="flex:1">
+                                <label>до, мс</label>
+                                <input class="input" type="number" name="delayMaxMs" min="0" max="60000"
+                                       th:value="${chaos.antifraudDelayMaxMs}">
+                            </div>
+                        </div>
+                        <div class="row" style="gap:10px;flex-wrap:nowrap">
+                            <div class="field" style="flex:1">
+                                <label>Ошибок, %</label>
+                                <input class="input" type="number" name="errorPercent" min="0" max="100"
+                                       th:value="${chaos.antifraudErrorPercent}">
+                            </div>
+                            <div class="field" style="flex:1">
+                                <label>Отказов, %</label>
+                                <input class="input" type="number" name="rejectPercent" min="0" max="100"
+                                       th:value="${chaos.antifraudRejectPercent}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Kafka ====================== -->
+                <form method="post" th:action="@{/admin/chaos/kafka}" class="card chaos-card"
+                      th:classappend="${chaos.kafkaConsumerPaused or chaos.kafkaConsumerDelayMs > 0}
+                                     ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="paused" value="true"
+                                   th:checked="${chaos.kafkaConsumerPaused}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Kafka: пауза и медленный консьюмер</div>
+                            <div class="chaos-card__desc">
+                                На паузе события копятся в топике: растёт лаг группы,
+                                статусы переводов не обновляются. Задержка замедляет разбор очереди.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert--warn mb-0" th:unless="${chaos.kafkaAvailable}">
+                        <span class="alert__icon"><svg class="icon"><use href="#i-info"/></svg></span>
+                        <span class="alert__body">
+                            Kafka в этом запуске не используется: переводы обрабатывает
+                            внутренняя очередь в памяти.
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label>Задержка на событие, мс</label>
+                        <input class="input" type="number" name="consumerDelayMs" min="0" max="60000"
+                               th:value="${chaos.kafkaConsumerDelayMs}">
+                        <span class="field__hint">
+                            Группа <code class="inline">nt-bank-processor</code>, топик
+                            <code class="inline">nt-bank.transfers</code>
+                        </span>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+                <!-- ====================== Rate limit ====================== -->
+                <form method="post" th:action="@{/admin/chaos/rate-limit}" class="card chaos-card"
+                      th:classappend="${chaos.rateLimitEnabled} ? 'chaos-card--on'">
+                    <div class="chaos-card__head">
+                        <label class="switch">
+                            <input type="checkbox" name="enabled" value="true"
+                                   th:checked="${chaos.rateLimitEnabled}">
+                            <span class="switch__track"></span>
+                        </label>
+                        <div>
+                            <div class="chaos-card__title">Ограничение частоты запросов</div>
+                            <div class="chaos-card__desc">
+                                Лимит запросов в секунду на пользователя.
+                                Сверх лимита сервер отвечает 429 с заголовком Retry-After.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-grid form-grid--2">
+                        <div class="field">
+                            <label>Запросов в секунду</label>
+                            <input class="input" type="number" name="rps" min="1" max="100000"
+                                   th:value="${chaos.rateLimitRps}">
+                        </div>
+                        <dl class="kv">
+                            <dt>Клиентов под учётом</dt>
+                            <dd th:text="${chaos.rateLimitClients}">0</dd>
+                        </dl>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--sm" type="submit">Применить</button>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="card mt-3">
+                <h3>То же самое через REST</h3>
+                <p class="small muted mb-0">
+                    <code class="inline">GET /api/admin/chaos</code> — текущее состояние,
+                    <code class="inline">POST /api/admin/chaos</code> — изменить (поля необязательные),
+                    <code class="inline">POST /api/admin/chaos/reset</code> — выключить всё.
+                    Доступ по HTTP Basic, пользователь <code class="inline">admin</code>.
+                </p>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

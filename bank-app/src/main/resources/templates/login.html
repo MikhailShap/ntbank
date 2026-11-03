@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Вход')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="public">
+    <header th:replace="~{fragments/layout :: publicTop}"></header>
+
+    <main class="public__main">
+        <div class="auth-card">
+            <h1 class="center">Вход в НТ-Банк</h1>
+            <p class="center muted mb-3">Введите логин и пароль клиента банка</p>
+
+            <div class="alert alert--danger" th:if="${param.error}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+                <span class="alert__body">Неверный логин или пароль</span>
+            </div>
+            <div class="alert alert--ok" th:if="${registered}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-check"/></svg></span>
+                <span class="alert__body" th:text="${registered}">Регистрация завершена</span>
+            </div>
+
+            <div class="card">
+                <form method="post" th:action="@{/login}" class="form-grid">
+                    <div class="field">
+                        <label for="login">Логин</label>
+                        <input class="input input--lg" type="text" id="login" name="login"
+                               autocomplete="username" required autofocus placeholder="user0001">
+                    </div>
+                    <div class="field">
+                        <label for="password">Пароль</label>
+                        <input class="input input--lg" type="password" id="password" name="password"
+                               autocomplete="current-password" required placeholder="Passw0rd!">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--lg btn--block" type="submit">Войти</button>
+                    </div>
+                </form>
+            </div>
+
+            <p class="center muted small mt-3">
+                Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a><br>
+                Тестовый клиент: <code class="inline">user0001</code> / <code class="inline">Passw0rd!</code>
+            </p>
+        </div>
+    </main>
+
+    <footer class="public__foot">НТ-Банк — учебный стенд для нагрузочного тестирования.</footer>
+</div>
+</body>
+</html>

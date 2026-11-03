@@ -1,0 +1,271 @@
+# =============================================================================
+# НТ-Банк — учебный стенд для нагрузочного тестирования.
+#
+#   docker compose up -d --build              полный стенд (банк, Kafka, «Антифрод»)
+#   docker compose --profile lite up -d       облегчённый: только банк и база
+#   docker compose down                       остановить
+#   docker compose down -v                    остановить и стереть данные
+#
+# Профиль по умолчанию задан в файле .env (COMPOSE_PROFILES=full).
+#
+#   Банк:        http://localhost:8080
+#   Grafana:     http://localhost:3000   (admin / admin)
+#   Prometheus:  http://localhost:9090
+#
+# Все порты открыты только для этого компьютера (127.0.0.1): пароли стенда известны всем,
+# кто читал README, поэтому из локальной сети он недоступен. Чтобы зайти со второго
+# компьютера (например, гонять JMeter с ноутбука), уберите «127.0.0.1:» в нужной строке ports.
+# =============================================================================
+
+x-bank-app: &bank-app
+  build:
+    context: ./bank-app
+  image: ntbank/bank-app:1.0.0
+  ports:
+    - "127.0.0.1:8080:8080"
+  volumes:
+    # сюда приложение выгружает test-data/users.csv для CSV Data Set Config в JMeter
+    - ./test-data:/test-data
+  healthcheck:
+    test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP" ]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+    start_period: 60s
+  mem_limit: 1g
+  restart: unless-stopped
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ntbank-postgres
+    environment:
+      POSTGRES_DB: ntbank
+      POSTGRES_USER: ntbank
+      POSTGRES_PASSWORD: ntbank
+      TZ: Europe/Moscow
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ntbank -d ntbank" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+    restart: unless-stopped
+
+  # Apache Kafka в режиме KRaft: без ZooKeeper, один брокер.
+  kafka:
+    image: apache/kafka:3.8.1
+    container_name: ntbank-kafka
+    profiles: [ full ]
+    environment:
+      CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+      TZ: Europe/Moscow
+    ports:
+      # порт для доступа с хоста (например, из консольных утилит Kafka)
+      - "127.0.0.1:29092:29092"
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    mem_limit: 1g
+    restart: unless-stopped
+
+  # Внешняя система «Антифрод»: банк ходит в неё по HTTP при обработке перевода.
+  antifraud:
+    build:
+      context: ./antifraud-stub
+    image: ntbank/antifraud-stub:1.0.0
+    container_name: ntbank-antifraud
+    profiles: [ full ]
+    environment:
+      TZ: Europe/Moscow
+      JAVA_OPTS: "-Xmx128m -XX:MaxMetaspaceSize=96m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Duser.timezone=Europe/Moscow"
+    ports:
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q UP" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    mem_limit: 256m
+    restart: unless-stopped
+
+  # Полный стенд: переводы обрабатываются через Kafka, антифрод — внешний сервис.
+  bank-app:
+    <<: *bank-app
+    container_name: ntbank-app
+    profiles: [ full ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      antifraud:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/ntbank
+      DB_USER: ntbank
+      DB_PASSWORD: ntbank
+      DB_POOL_SIZE: 30
+      SEED_USERS: 1000
+      SEED_CSV_PATH: /test-data/users.csv
+      # Нарастить историю операций при старте (0 — не наращивать). Задаётся в файле .env
+      SEED_OPERATIONS_TOTAL: ${SEED_OPERATIONS_TOTAL:-0}
+      KAFKA_BOOTSTRAP: kafka:9092
+      NTBANK_ASYNC_MODE: kafka
+      NTBANK_ANTIFRAUD_URL: http://antifraud:8081
+      NTBANK_ANTIFRAUD_MODE: http
+      TZ: Europe/Moscow
+      JAVA_OPTS: "-Xmx512m -XX:MaxMetaspaceSize=192m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+ExitOnOutOfMemoryError -Duser.timezone=Europe/Moscow"
+
+  # Облегчённый стенд (docker compose --profile lite up -d):
+  # без Kafka и «Антифрода», переводы идут через внутреннюю очередь в памяти.
+  bank-app-lite:
+    <<: *bank-app
+    container_name: ntbank-app-lite
+    profiles: [ lite ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/ntbank
+      DB_USER: ntbank
+      DB_PASSWORD: ntbank
+      DB_POOL_SIZE: 30
+      SEED_USERS: 1000
+      SEED_CSV_PATH: /test-data/users.csv
+      # Нарастить историю операций при старте (0 — не наращивать). Задаётся в файле .env
+      SEED_OPERATIONS_TOTAL: ${SEED_OPERATIONS_TOTAL:-0}
+      NTBANK_ASYNC_MODE: memory
+      NTBANK_ANTIFRAUD_MODE: local
+      TZ: Europe/Moscow
+      JAVA_OPTS: "-Xmx512m -XX:MaxMetaspaceSize=192m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+ExitOnOutOfMemoryError -Duser.timezone=Europe/Moscow"
+
+  # =========================================================================
+  # Мониторинг (этап 4). Только в полном профиле.
+  # =========================================================================
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: ntbank-prometheus
+    profiles: [ full ]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    mem_limit: 512m
+    restart: unless-stopped
+
+  # База для JMeter Backend Listener (InfluxdbBackendListenerClient)
+  influxdb:
+    image: influxdb:1.8.10
+    container_name: ntbank-influxdb
+    profiles: [ full ]
+    environment:
+      INFLUXDB_DB: jmeter
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      INFLUXDB_REPORTING_DISABLED: "true"
+      INFLUXDB_HTTP_LOG_ENABLED: "false"
+      INFLUXDB_DATA_QUERY_LOG_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8086:8086"
+    volumes:
+      - influxdata:/var/lib/influxdb
+    mem_limit: 384m
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: ntbank-grafana
+    profiles: [ full ]
+    depends_on:
+      - prometheus
+      - influxdb
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # смотреть дашборды можно и без входа, править — под admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/ntbank.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      TZ: Europe/Moscow
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    mem_limit: 256m
+    restart: unless-stopped
+
+  # Смещения топиков и лаг групп консьюмеров Kafka
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.8.0
+    container_name: ntbank-kafka-exporter
+    profiles: [ full ]
+    command: [ "--kafka.server=kafka:9092" ]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9308:9308"
+    mem_limit: 64m
+    restart: unless-stopped
+
+  # Метрики PostgreSQL: транзакции, соединения, обращения к таблицам
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ntbank-postgres-exporter
+    profiles: [ full ]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://ntbank:ntbank@postgres:5432/ntbank?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9187:9187"
+    mem_limit: 64m
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  kafkadata:
+  promdata:
+  influxdata:
+  grafanadata:

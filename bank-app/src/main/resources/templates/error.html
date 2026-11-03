@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ошибка')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="public">
+    <header th:replace="~{fragments/layout :: publicTop}"></header>
+
+    <main class="public__main">
+        <div class="auth-card">
+            <div class="card center">
+                <div class="empty__icon" style="margin-bottom:16px">
+                    <svg class="icon icon--xl"><use href="#i-alert"/></svg>
+                </div>
+                <h1 th:text="${status} ?: 'Ошибка'">500</h1>
+                <p class="muted" th:text="${message} ?: 'Что-то пошло не так'">Что-то пошло не так</p>
+                <a class="btn mt-2" th:href="@{/dashboard}">На главную</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="public__foot">НТ-Банк — учебный стенд для нагрузочного тестирования.</footer>
+</div>
+</body>
+</html>

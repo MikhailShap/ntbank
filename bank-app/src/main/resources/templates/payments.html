@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Оплата услуг')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Платежи', 'payments')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Оплата услуг</h1>
+                    <p class="page-head__sub">Мобильная связь, интернет и ТВ, ЖКХ, транспорт и другие категории</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/templates}">
+                        <svg class="icon"><use href="#i-bookmark"/></svg> Мои шаблоны
+                    </a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="card mb-2">
+                <form method="get" th:action="@{/payments}" class="inline-form">
+                    <div class="field" style="flex:2 1 280px">
+                        <label for="query">Поиск по названию или поставщику</label>
+                        <input class="input" type="search" id="query" name="query" th:value="${query}"
+                               placeholder="например, Горсвет или мобильная">
+                    </div>
+                    <div class="field">
+                        <label for="category">Категория</label>
+                        <select class="select" id="category" name="category">
+                            <option value="">Все категории</option>
+                            <option th:each="c : ${categories}" th:value="${c}"
+                                    th:selected="${c == category}" th:text="${c}">Категория</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn" type="submit">
+                            <svg class="icon"><use href="#i-search"/></svg> Найти
+                        </button>
+                        <a class="btn btn--ghost" th:href="@{/payments}">Сбросить</a>
+                    </div>
+                </form>
+            </div>
+
+            <p class="muted small mb-2">
+                Найдено услуг: <span class="strong" th:text="${page.totalElements}">0</span>
+            </p>
+
+            <div class="grid grid--3 mb-3" th:if="${page.totalElements > 0}">
+                <a class="acct" th:each="service : ${page.content}"
+                   th:href="@{'/payments/' + ${service.id}}">
+                    <div class="acct__top">
+                        <span class="acct__icon">
+                            <svg class="icon"><use th:attr="href='#' + ${service.icon()}"/></svg>
+                        </span>
+                        <span>
+                            <span class="acct__title" th:text="${service.name}">Услуга</span><br>
+                            <span class="acct__num" th:text="${service.category}">Категория</span>
+                        </span>
+                    </div>
+                    <p class="small muted mb-0" th:text="${service.provider}">Поставщик</p>
+                </a>
+            </div>
+
+            <div class="card empty" th:if="${page.totalElements == 0}">
+                <div class="empty__icon"><svg class="icon icon--xl"><use href="#i-search"/></svg></div>
+                <p class="empty__title">Ничего не нашлось</p>
+                <p>Попробуйте другое название или сбросьте фильтр по категории.</p>
+                <a class="btn btn--sm mt-2" th:href="@{/payments}">Показать все услуги</a>
+            </div>
+
+            <nav th:replace="~{fragments/layout :: pager(${page}, ${baseUrl})}"></nav>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

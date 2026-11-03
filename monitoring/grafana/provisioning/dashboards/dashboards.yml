@@ -1,0 +1,12 @@
+# Дашборды подхватываются из файлов в monitoring/grafana/dashboards.
+apiVersion: 1
+
+providers:
+  - name: ntbank
+    folder: НТ-Банк
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

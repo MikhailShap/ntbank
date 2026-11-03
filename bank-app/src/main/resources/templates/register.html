@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Регистрация')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="public">
+    <header th:replace="~{fragments/layout :: publicTop}"></header>
+
+    <main class="public__main">
+        <div class="auth-card" style="max-width:520px">
+            <h1 class="center">Регистрация</h1>
+            <p class="center muted mb-3">
+                После регистрации автоматически откроются рублёвый и долларовый счета
+            </p>
+
+            <div class="alert alert--danger" th:if="${error}">
+                <span class="alert__icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+                <span class="alert__body" th:text="${error}">Ошибка</span>
+            </div>
+
+            <div class="card">
+                <form method="post" th:action="@{/register}" th:object="${form}" class="form-grid">
+                    <div class="field" th:classappend="${#fields.hasErrors('login')} ? 'field--invalid'">
+                        <label for="reg-login">Логин</label>
+                        <input class="input" type="text" id="reg-login" th:field="*{login}"
+                               placeholder="ivanov2026" autocomplete="username" required>
+                        <span class="field__hint">Латиница и цифры, от 4 до 32 символов</span>
+                        <span class="field__error" th:if="${#fields.hasErrors('login')}"
+                              th:errors="*{login}">Ошибка</span>
+                    </div>
+
+                    <div class="field" th:classappend="${#fields.hasErrors('password')} ? 'field--invalid'">
+                        <label for="reg-password">Пароль</label>
+                        <input class="input" type="password" id="reg-password" th:field="*{password}"
+                               autocomplete="new-password" required>
+                        <span class="field__hint">Не короче 6 символов</span>
+                        <span class="field__error" th:if="${#fields.hasErrors('password')}"
+                              th:errors="*{password}">Ошибка</span>
+                    </div>
+
+                    <div class="field" th:classappend="${#fields.hasErrors('fullName')} ? 'field--invalid'">
+                        <label for="reg-name">ФИО</label>
+                        <input class="input" type="text" id="reg-name" th:field="*{fullName}"
+                               placeholder="Иванов Иван Иванович" required>
+                        <span class="field__error" th:if="${#fields.hasErrors('fullName')}"
+                              th:errors="*{fullName}">Ошибка</span>
+                    </div>
+
+                    <div class="field" th:classappend="${#fields.hasErrors('phone')} ? 'field--invalid'">
+                        <label for="reg-phone">Телефон</label>
+                        <input class="input" type="tel" id="reg-phone" th:field="*{phone}"
+                               placeholder="+7 900 123 4567" required>
+                        <span class="field__hint">На него будут приходить коды подтверждения переводов</span>
+                        <span class="field__error" th:if="${#fields.hasErrors('phone')}"
+                              th:errors="*{phone}">Ошибка</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn--lg btn--block" type="submit">Зарегистрироваться</button>
+                    </div>
+                </form>
+            </div>
+
+            <p class="center muted small mt-3">
+                Уже есть аккаунт? <a th:href="@{/login}">Войти</a>
+            </p>
+        </div>
+    </main>
+
+    <footer class="public__foot">НТ-Банк — учебный стенд для нагрузочного тестирования.</footer>
+</div>
+</body>
+</html>

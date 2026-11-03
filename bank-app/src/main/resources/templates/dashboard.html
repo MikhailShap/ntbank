@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Главная')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Главная', 'home')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1 th:text="'Здравствуйте, ' + ${me.fullName}">Здравствуйте</h1>
+                    <p class="page-head__sub">
+                        <span th:text="${@fmt.date(today)}">20.10.2026</span>,
+                        всего на счетах <span class="strong" th:text="${@fmt.money(totalRub, 'RUB')}">0 ₽</span>
+                    </p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn" th:href="@{/transfers/phone}">
+                        <svg class="icon"><use href="#i-transfer"/></svg> Перевести
+                    </a>
+                    <a class="btn btn--ghost" th:href="@{/payments}">
+                        <svg class="icon"><use href="#i-receipt"/></svg> Оплатить услуги
+                    </a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--main">
+
+                <div class="stack">
+                    <div class="grid grid--2">
+                        <a class="acct" th:each="account : ${accounts}"
+                           th:href="@{'/accounts/' + ${account.id} + '/statement'}">
+                            <div class="acct__top">
+                                <span class="acct__icon"
+                                      th:classappend="${account.currency != 'RUB'} ? 'acct__icon--usd'"
+                                      th:text="${@fmt.symbol(account.currency)}">₽</span>
+                                <span>
+                                    <span class="acct__title" th:text="${account.title}">Текущий счёт</span><br>
+                                    <span class="acct__num" th:text="${account.masked()}">•••• 0000</span>
+                                </span>
+                            </div>
+                            <div class="acct__balance"
+                                 th:text="${@fmt.money(account.balance, account.currency)}">0 ₽</div>
+                            <div class="acct__hint" th:if="${account.currency == 'RUB'}">Доступно для перевода</div>
+                            <div class="acct__hint" th:unless="${account.currency == 'RUB'}"
+                                 th:text="'≈ ' + ${@fmt.money(rubEquivalent[account.id], 'RUB')} + ' по курсу ' + ${@fmt.amount(rateUsd)}">
+                                ≈ 0 ₽
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="card card--flush">
+                        <div class="card__head">
+                            <h2>Последние операции</h2>
+                            <a class="card__link" th:if="${not #lists.isEmpty(accounts)}"
+                               th:href="@{'/accounts/' + ${accounts[0].id} + '/statement'}">
+                                Вся выписка <svg class="icon icon--sm"><use href="#i-chevron-right"/></svg>
+                            </a>
+                        </div>
+
+                        <div class="table-wrap" th:if="${not #lists.isEmpty(operations)}">
+                            <table class="tbl">
+                                <thead>
+                                <tr>
+                                    <th>Операция</th>
+                                    <th class="hide-sm">Дата</th>
+                                    <th class="right">Сумма</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="op : ${operations}">
+                                    <td>
+                                        <span class="op">
+                                            <span class="op__icon"
+                                                  th:style="'color:' + (${op.incoming()} ? 'var(--money-in)' : 'var(--money-out)')">
+                                                <svg class="icon icon--sm"><use th:attr="href='#' + ${op.icon()}"/></svg>
+                                            </span>
+                                            <span>
+                                                <span class="op__title" th:text="${op.description}">Операция</span><br>
+                                                <span class="op__sub">
+                                                    <span class="only-sm" th:text="${@fmt.dateTime(op.createdAt)} + ' · '"></span>
+                                                    <span th:text="${op.kindTitle()}">Оплата</span>
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td class="nowrap muted hide-sm" th:text="${@fmt.dateTime(op.createdAt)}">—</td>
+                                    <td class="right">
+                                        <span class="amount"
+                                              th:classappend="${op.incoming()} ? 'amount--in' : 'amount--out'"
+                                              th:text="${@fmt.signed(op)}">0 ₽</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="empty" th:if="${#lists.isEmpty(operations)}">
+                            <div class="empty__icon"><svg class="icon icon--xl"><use href="#i-doc"/></svg></div>
+                            <p class="empty__title">Операций пока нет</p>
+                            <p>Сделайте первый перевод или оплатите услугу — история появится здесь.</p>
+                            <a class="btn btn--sm mt-2" th:href="@{/transfers/phone}">Создать перевод</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack">
+                    <div class="plastic" th:each="card : ${cards}">
+                        <div class="plastic__row">
+                            <span class="plastic__kind">Дебетовая карта</span>
+                            <span class="plastic__chip"></span>
+                        </div>
+                        <div class="plastic__pan" th:text="${card.panMasked}">5536 •••• •••• 0000</div>
+                        <div class="plastic__row">
+                            <span>
+                                <span class="plastic__kind">Баланс</span><br>
+                                <span class="plastic__balance"
+                                      th:text="${@fmt.money(card.account.balance, card.account.currency)}">0 ₽</span>
+                            </span>
+                            <span class="small" style="opacity:.8" th:text="'до ' + ${card.expires}">до 09/29</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Быстрые действия</h3>
+                        <div class="stack" style="gap:10px">
+                            <a class="quick" th:href="@{/transfers/phone}">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-transfer"/></svg></span>
+                                По номеру телефона
+                                <span style="margin-left:auto;color:var(--ink-400)">
+                                    <svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                            <a class="quick" th:href="@{/transfers/own}">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-wallet"/></svg></span>
+                                Между своими счетами
+                                <span style="margin-left:auto;color:var(--ink-400)">
+                                    <svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                            <a class="quick" th:href="@{/templates}">
+                                <span class="quick__icon"><svg class="icon"><use href="#i-bolt"/></svg></span>
+                                Повторить по шаблону
+                                <span style="margin-left:auto;color:var(--ink-400)">
+                                    <svg class="icon icon--sm"><use href="#i-chevron-right"/></svg></span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="row" style="justify-content:space-between">
+                            <div class="metric">
+                                <span class="metric__label">Курс доллара НТ-Банка</span>
+                                <span class="metric__value" th:text="${@fmt.money(rateUsd, 'RUB')}">0 ₽</span>
+                            </div>
+                            <span class="badge badge--info">
+                                <svg class="icon icon--sm"><use href="#i-chart"/></svg> покупка/продажа
+                            </span>
+                        </div>
+                        <p class="small muted mt-2 mb-0">
+                            По этому курсу пересчитывается перевод между своими счетами в разных валютах.
+                        </p>
+                    </div>
+
+                    <div class="card" th:if="${not #lists.isEmpty(transfers)}">
+                        <h3>Последние переводы</h3>
+                        <div class="row" style="justify-content:space-between" th:each="t : ${transfers}">
+                            <a class="small" th:href="@{'/transfers/' + ${t.id}}"
+                               th:text="'№' + ${t.shortId()} + ' · ' + ${@fmt.money(t.amount, t.currency)}">№...</a>
+                            <span class="badge" th:classappend="${t.status.badgeClass()}">
+                                <span class="dot" th:if="${t.status.name() == 'PROCESSING'}"></span>
+                                <span th:text="${t.status.titleRu()}">Статус</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Переводы')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Переводы', 'transfers')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Переводы</h1>
+                    <p class="page-head__sub">Между своими счетами — сразу, по номеру телефона — с подтверждением кодом</p>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--2 mb-3">
+                <a class="acct" th:href="@{/transfers/phone}">
+                    <div class="acct__top">
+                        <span class="acct__icon"><svg class="icon icon--lg"><use href="#i-transfer"/></svg></span>
+                        <span>
+                            <span class="acct__title">Другому клиенту по телефону</span><br>
+                            <span class="acct__num">Подтверждение кодом из СМС</span>
+                        </span>
+                    </div>
+                    <p class="muted mb-0">
+                        Перевод создаётся черновиком, код приходит «по СМС», после подтверждения
+                        обработка идёт асинхронно — статус меняется через несколько секунд.
+                    </p>
+                </a>
+
+                <a class="acct" th:href="@{/transfers/own}">
+                    <div class="acct__top">
+                        <span class="acct__icon acct__icon--usd"><svg class="icon icon--lg"><use href="#i-wallet"/></svg></span>
+                        <span>
+                            <span class="acct__title">Между своими счетами</span><br>
+                            <span class="acct__num">С конвертацией по курсу банка</span>
+                        </span>
+                    </div>
+                    <p class="muted mb-0">
+                        Деньги переводятся мгновенно. Если валюты счетов разные,
+                        сумма пересчитывается по курсу НТ-Банка.
+                    </p>
+                </a>
+            </div>
+
+            <div class="card card--flush">
+                <div class="card__head">
+                    <h2>История переводов</h2>
+                </div>
+
+                <div class="table-wrap" th:if="${not #lists.isEmpty(page.content)}">
+                    <table class="tbl">
+                        <thead>
+                        <tr>
+                            <th>Перевод</th>
+                            <th class="hide-sm">Дата</th>
+                            <th>Статус</th>
+                            <th class="right">Сумма</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t : ${page.content}">
+                            <td>
+                                <span class="op">
+                                    <span class="op__icon"><svg class="icon icon--sm"><use href="#i-transfer"/></svg></span>
+                                    <span>
+                                        <a class="op__title" th:href="@{'/transfers/' + ${t.id}}"
+                                           th:text="${t.type.name() == 'PHONE'} ? 'Перевод на ' + ${@fmt.phone(t.toPhone)} : 'Между своими счетами'">
+                                            Перевод</a><br>
+                                        <span class="op__sub">
+                                            <span class="only-sm" th:text="${@fmt.dateTime(t.createdAt)} + ' · '"></span>
+                                            <span class="mono" th:text="'№' + ${t.shortId()}">№0000</span>
+                                            <span th:if="${t.toName}" th:text="' · ' + ${t.toName}"></span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </td>
+                            <td class="nowrap muted hide-sm" th:text="${@fmt.dateTime(t.createdAt)}">—</td>
+                            <td>
+                                <span class="badge" th:classappend="${t.status.badgeClass()}">
+                                    <span class="dot" th:if="${t.status.name() == 'PROCESSING'}"></span>
+                                    <span th:text="${t.status.titleRu()}">Статус</span>
+                                </span>
+                            </td>
+                            <td class="right">
+                                <span class="amount amount--out"
+                                      th:text="${@fmt.money(t.amount, t.currency)}">0 ₽</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty" th:if="${#lists.isEmpty(page.content)}">
+                    <div class="empty__icon"><svg class="icon icon--xl"><use href="#i-transfer"/></svg></div>
+                    <p class="empty__title">Переводов пока нет</p>
+                    <p>Сделайте первый перевод по номеру телефона — это главный сценарий стенда.</p>
+                    <a class="btn btn--sm mt-2" th:href="@{/transfers/phone}">Создать перевод</a>
+                </div>
+
+                <div class="card__foot" th:if="${page.totalPages > 1}">
+                    <nav th:replace="~{fragments/layout :: pager(${page}, '/transfers')}"></nav>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Оплата услуги')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Оплата услуги', 'payments')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1 th:text="${service.name}">Услуга</h1>
+                    <p class="page-head__sub">
+                        <span th:text="${service.category}">Категория</span> ·
+                        <span th:text="${service.provider}">Поставщик</span>
+                    </p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/payments}">К каталогу</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--main">
+                <div class="card">
+                    <form method="post" th:action="@{'/payments/' + ${service.id}}" class="form-grid">
+                        <div class="field" th:classappend="${fieldErrors?.get('personalAccount')} ? 'field--invalid'">
+                            <label for="personalAccount" th:text="${service.accountLabel}">Лицевой счёт</label>
+                            <input class="input input--lg" type="text" id="personalAccount"
+                                   name="personalAccount" th:value="${personalAccount}"
+                                   maxlength="40" required autofocus placeholder="770041289">
+                            <span class="field__error" th:if="${fieldErrors?.get('personalAccount')}"
+                                  th:text="${fieldErrors?.get('personalAccount')}">Ошибка</span>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('amount')} ? 'field--invalid'">
+                            <label for="amount">Сумма</label>
+                            <input class="input input--lg" type="number" id="amount" name="amount"
+                                   th:value="${amount}" step="0.01"
+                                   th:min="${service.minAmount}" th:max="${service.maxAmount}" required>
+                            <span class="field__hint"
+                                  th:text="'От ' + ${@fmt.money(service.minAmount, 'RUB')} +
+                                           ' до ' + ${@fmt.money(service.maxAmount, 'RUB')}">Лимиты</span>
+                            <span class="field__error" th:if="${fieldErrors?.get('amount')}"
+                                  th:text="${fieldErrors?.get('amount')}">Ошибка</span>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('accountId')} ? 'field--invalid'">
+                            <label for="accountId">Счёт списания</label>
+                            <select class="select" id="accountId" name="accountId" required>
+                                <option th:each="account : ${accounts}" th:value="${account.id}"
+                                        th:selected="${account.id == selectedAccountId}"
+                                        th:text="${account.title} + ' · ' + ${account.masked()} + ' · ' +
+                                                 ${@fmt.money(account.balance, account.currency)}">Счёт</option>
+                            </select>
+                            <span class="field__hint">Оплата услуг возможна только с рублёвого счёта</span>
+                            <span class="field__error" th:if="${fieldErrors?.get('accountId')}"
+                                  th:text="${fieldErrors?.get('accountId')}">Ошибка</span>
+                        </div>
+
+                        <label class="check">
+                            <input type="checkbox" name="saveTemplate" value="true" th:checked="${saveTemplate}">
+                            <span>
+                                Сохранить как шаблон<br>
+                                <span class="field__hint">Потом можно будет повторить платёж одной кнопкой</span>
+                            </span>
+                        </label>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('templateName')} ? 'field--invalid'">
+                            <label for="templateName">Название шаблона (необязательно)</label>
+                            <input class="input" type="text" id="templateName" name="templateName"
+                                   th:value="${templateName}" maxlength="80" th:placeholder="${service.name}">
+                            <span class="field__error" th:if="${fieldErrors?.get('templateName')}"
+                                  th:text="${fieldErrors?.get('templateName')}">Ошибка</span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn--lg" type="submit">Оплатить</button>
+                            <a class="btn btn--ghost" th:href="@{/payments}">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="stack">
+                    <div class="card">
+                        <h3>Об услуге</h3>
+                        <dl class="kv">
+                            <dt>Код</dt>
+                            <dd class="mono" th:text="${service.code}">MOB01</dd>
+                            <dt>Категория</dt>
+                            <dd th:text="${service.category}">—</dd>
+                            <dt>Поставщик</dt>
+                            <dd th:text="${service.provider}">—</dd>
+                            <dt>Комиссия</dt>
+                            <dd th:text="${service.commissionPercent.signum() == 0} ? 'без комиссии'
+                                         : ${#numbers.formatDecimal(service.commissionPercent, 1, 'WHITESPACE', 2, 'COMMA')} + ' %'">без комиссии</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

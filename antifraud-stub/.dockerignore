@@ -1,0 +1,5 @@
+# В образ копируются только mvnw, pom.xml, .mvn и src — остальное не нужно отправлять в Docker
+target/
+.idea/
+*.iml
+.vscode/

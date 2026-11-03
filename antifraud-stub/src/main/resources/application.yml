@@ -1,0 +1,36 @@
+server:
+  port: 8081
+  tomcat:
+    threads:
+      max: 50
+
+spring:
+  application:
+    name: antifraud-stub
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+antifraud:
+  # Сумма, с которой перевод отклоняется всегда
+  threshold-amount: 150000
+  # Доля переводов, отклоняемых «подозрительными» правилами, в процентах
+  base-reject-percent: 7
+  # Базовая задержка ответа, мс (имитация работы внешней системы)
+  base-latency-ms: 120
+
+logging:
+  level:
+    root: INFO
+    ru.ntbank: INFO

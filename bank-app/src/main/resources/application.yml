@@ -1,0 +1,162 @@
+server:
+  port: 8080
+  tomcat:
+    # без MBean-реестра Micrometer не видит пул потоков Tomcat (tomcat_threads_*)
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 200
+    max-connections: 8192
+  servlet:
+    session:
+      timeout: 30m
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: bank-app
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ntbank}
+    username: ${DB_USER:ntbank}
+    password: ${DB_PASSWORD:ntbank}
+    hikari:
+      pool-name: ntbank-pool
+      maximum-pool-size: ${DB_POOL_SIZE:30}
+      minimum-idle: 5
+      connection-timeout: 10000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  thymeleaf:
+    cache: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 3600
+      # В адрес CSS и JS добавляется хеш содержимого (app-3f1c….css): после обновления стенда
+      # браузер сразу берёт новые файлы, а не держит старые из кэша ещё час
+      chain:
+        strategy:
+          content:
+            enabled: true
+            paths: /css/**,/js/**
+  mvc:
+    format:
+      date: iso
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        spring.json.add.type.headers: false
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+    consumer:
+      group-id: nt-bank-processor
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.value.default.type: ru.ntbank.bank.async.TransferEvent
+        spring.json.trusted.packages: ru.ntbank.bank.async
+    listener:
+      ack-mode: record
+      missing-topics-fatal: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      # readinessState в общем статусе: пока при первом старте генерируются тестовые данные
+      # (это идёт после запуска Tomcat), /actuator/health отвечает OUT_OF_SERVICE и контейнер
+      # не считается готовым. Иначе первые запросы JMeter приходили бы в пустую базу.
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s,2s,5s
+  observations:
+    key-values:
+      application: ${spring.application.name}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    operations-sorter: alpha
+    tags-sorter: alpha
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
+
+ntbank:
+  bank-name: НТ-Банк
+  seed:
+    enabled: true
+    users: ${SEED_USERS:1000}
+    password: "Passw0rd!"
+    csv-path: ${SEED_CSV_PATH:/test-data/users.csv}
+    # Нарастить историю до N операций после генерации (0 — не наращивать), например 2000000
+    operations-total: ${SEED_OPERATIONS_TOTAL:0}
+  jwt:
+    secret: ${JWT_SECRET:nt-bank-demo-secret-key-for-load-testing-stand-0123456789}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
+  otp:
+    length: 6
+    ttl-minutes: 10
+    max-attempts: 3
+  transfer:
+    min-delay-ms: 1000
+    max-delay-ms: 5000
+    limit: 300000.00
+  async-mode: ${NTBANK_ASYNC_MODE:auto}
+  antifraud:
+    # Пусто — внешний сервис не используется, работают локальные правила
+    url: ${NTBANK_ANTIFRAUD_URL:}
+    mode: ${NTBANK_ANTIFRAUD_MODE:auto}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 10000
+  kafka:
+    transfers-topic: ${NTBANK_TRANSFERS_TOPIC:nt-bank.transfers}
+    partitions: 3
+
+logging:
+  level:
+    root: INFO
+    ru.ntbank: INFO
+    org.hibernate.SQL: WARN

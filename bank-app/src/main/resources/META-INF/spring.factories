@@ -1,0 +1,4 @@
+# Определение режимов работы (Kafka / очередь в памяти, внешний антифрод / локальные правила)
+# до создания контекста приложения.
+org.springframework.boot.env.EnvironmentPostProcessor=\
+  ru.ntbank.bank.config.IntegrationModeResolver

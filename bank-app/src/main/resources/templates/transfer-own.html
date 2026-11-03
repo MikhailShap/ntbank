@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Между своими счетами')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Между своими счетами', 'transfers')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Перевод между своими счетами</h1>
+                    <p class="page-head__sub">Зачисление сразу, конвертация по курсу НТ-Банка</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/transfers}">Все переводы</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--main">
+                <div class="card">
+                    <form method="post" th:action="@{/transfers/own}" class="form-grid">
+                        <div class="form-grid form-grid--2">
+                            <div class="field" th:classappend="${fieldErrors?.get('fromAccountId')} ? 'field--invalid'">
+                                <label for="fromAccountId">Списать со счёта</label>
+                                <select class="select" id="fromAccountId" name="fromAccountId" required>
+                                    <option th:each="account : ${accounts}"
+                                            th:value="${account.id}"
+                                            th:selected="${account.id == fromAccountId}"
+                                            th:text="${account.title} + ' · ' +
+                                                     ${@fmt.money(account.balance, account.currency)}">Счёт</option>
+                                </select>
+                                <span class="field__error" th:if="${fieldErrors?.get('fromAccountId')}"
+                                      th:text="${fieldErrors?.get('fromAccountId')}">Ошибка</span>
+                            </div>
+                            <div class="field" th:classappend="${fieldErrors?.get('toAccountId')} ? 'field--invalid'">
+                                <label for="toAccountId">Зачислить на счёт</label>
+                                <select class="select" id="toAccountId" name="toAccountId" required>
+                                    <option th:each="account, it : ${accounts}"
+                                            th:value="${account.id}"
+                                            th:selected="${toAccountId != null ? account.id == toAccountId : it.index == 1}"
+                                            th:text="${account.title} + ' · ' +
+                                                     ${@fmt.money(account.balance, account.currency)}">Счёт</option>
+                                </select>
+                                <span class="field__error" th:if="${fieldErrors?.get('toAccountId')}"
+                                      th:text="${fieldErrors?.get('toAccountId')}">Ошибка</span>
+                            </div>
+                        </div>
+
+                        <div class="field" th:classappend="${fieldErrors?.get('amount')} ? 'field--invalid'">
+                            <label for="amount">Сумма в валюте счёта списания</label>
+                            <input class="input input--lg" type="number" id="amount" name="amount" th:value="${amount}"
+                                   min="0.01" step="0.01" placeholder="10000" required autofocus>
+                            <span class="field__hint"
+                                  th:text="'Курс: 1 USD = ' + ${@fmt.money(rateUsd, 'RUB')}">Курс</span>
+                            <span class="field__error" th:if="${fieldErrors?.get('amount')}"
+                                  th:text="${fieldErrors?.get('amount')}">Ошибка</span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn--lg" type="submit">Перевести</button>
+                            <a class="btn btn--ghost" th:href="@{/dashboard}">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Ваши счета</h3>
+                    <div class="stack" style="gap:10px">
+                        <div class="quick" th:each="account : ${accounts}">
+                            <span class="quick__icon" th:text="${@fmt.symbol(account.currency)}">₽</span>
+                            <span>
+                                <span th:text="${account.title}">Счёт</span><br>
+                                <span class="small muted"
+                                      th:text="${@fmt.money(account.balance, account.currency)}">0 ₽</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

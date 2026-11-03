@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Перевод')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Перевод', 'transfers')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Перевод <span class="mono" th:text="'№' + ${transfer.shortId()}">№0000</span></h1>
+                    <p class="page-head__sub mono" th:text="${transfer.id}">идентификатор</p>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/transfers}">Все переводы</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--main">
+                <div class="stack">
+
+                    <!-- Шаг подтверждения кодом -->
+                    <div class="card" th:if="${transfer.status.name() == 'DRAFT'}">
+                        <h2>Подтвердите перевод</h2>
+                        <p class="muted">
+                            Код отправлен по СМС на номер
+                            <span class="strong" th:text="${@fmt.phone(me.phone)}">+7 900 000 0001</span>.
+                            Посмотреть его можно на странице
+                            <a th:href="@{/dev/sms(phone=${me.phone})}">Тестовые СМС</a>.
+                        </p>
+                        <form method="post" th:action="@{'/transfers/' + ${transfer.id} + '/confirm'}"
+                              class="form-grid" style="max-width:320px">
+                            <div class="field" th:classappend="${fieldErrors?.get('otp')} ? 'field--invalid'">
+                                <label for="otp">Код из СМС</label>
+                                <input class="input input--otp" type="text" id="otp" name="otp"
+                                       inputmode="numeric" maxlength="6" pattern="[0-9]{6}"
+                                       autocomplete="one-time-code" required autofocus placeholder="000000">
+                                <span class="field__hint"
+                                      th:text="'Осталось попыток: ' + (${maxAttempts} - ${transfer.otpAttempts})">
+                                    Осталось попыток: 3</span>
+                                <span class="field__error" th:if="${fieldErrors?.get('otp')}"
+                                      th:text="${fieldErrors?.get('otp')}">Ошибка</span>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn--lg" type="submit">Подтвердить перевод</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Статус после подтверждения -->
+                    <div class="card" th:unless="${transfer.status.name() == 'DRAFT'}">
+                        <div class="row" style="justify-content:space-between;align-items:flex-start">
+                            <div>
+                                <h2 class="mb-0">Статус перевода</h2>
+                                <p class="muted mb-0" th:if="${transfer.status.name() == 'PROCESSING'}">
+                                    Перевод отправлен на обработку. Нажмите «Обновить статус» через пару секунд.
+                                </p>
+                                <p class="muted mb-0" th:if="${transfer.status.name() == 'DONE'}">
+                                    Деньги зачислены получателю.
+                                </p>
+                                <p class="muted mb-0" th:if="${transfer.status.name() == 'REJECTED'}">
+                                    Перевод отклонён, деньги возвращены на счёт.
+                                </p>
+                            </div>
+                            <span class="badge" th:classappend="${transfer.status.badgeClass()}">
+                                <span class="dot" th:if="${transfer.status.name() == 'PROCESSING'}"></span>
+                                <span th:text="${transfer.status.titleRu()}">Статус</span>
+                            </span>
+                        </div>
+
+                        <div class="alert alert--danger mt-2 mb-0" th:if="${transfer.rejectReason}">
+                            <span class="alert__icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+                            <span class="alert__body">
+                                <span class="alert__title">Причина отклонения</span><br>
+                                <span th:text="${transfer.rejectReason}">—</span>
+                            </span>
+                        </div>
+
+                        <div class="form-actions mt-3">
+                            <a class="btn" th:href="@{'/transfers/' + ${transfer.id}}">
+                                <svg class="icon"><use href="#i-refresh"/></svg> Обновить статус
+                            </a>
+                            <a class="btn btn--ghost" th:href="@{/transfers/phone}">Новый перевод</a>
+                        </div>
+                    </div>
+
+                    <div class="card card--flush">
+                        <div class="card__head"><h3>Детали</h3></div>
+                        <div class="card__body">
+                            <dl class="kv">
+                                <dt>Идентификатор</dt>
+                                <dd class="mono" th:text="${transfer.id}">—</dd>
+                                <dt>Тип</dt>
+                                <dd th:text="${transfer.type.name() == 'PHONE'} ? 'По номеру телефона' : 'Между своими счетами'">—</dd>
+                                <dt>Получатель</dt>
+                                <dd th:text="${transfer.toName} ?: '—'">—</dd>
+                                <dt th:if="${transfer.toPhone}">Телефон</dt>
+                                <dd th:if="${transfer.toPhone}" th:text="${@fmt.phone(transfer.toPhone)}">—</dd>
+                                <dt>Сумма</dt>
+                                <dd th:text="${@fmt.money(transfer.amount, transfer.currency)}">—</dd>
+                                <dt th:if="${transfer.creditedAmount}">Зачислено</dt>
+                                <dd th:if="${transfer.creditedAmount}"
+                                    th:text="${@fmt.money(transfer.creditedAmount, transfer.creditedCurrency)}">—</dd>
+                                <dt th:if="${transfer.comment}">Сообщение</dt>
+                                <dd th:if="${transfer.comment}" th:text="${transfer.comment}">—</dd>
+                                <dt>Создан</dt>
+                                <dd th:text="${@fmt.dateTime(transfer.createdAt)}">—</dd>
+                                <dt th:if="${transfer.confirmedAt}">Подтверждён</dt>
+                                <dd th:if="${transfer.confirmedAt}" th:text="${@fmt.dateTime(transfer.confirmedAt)}">—</dd>
+                                <dt th:if="${transfer.completedAt}">Завершён</dt>
+                                <dd th:if="${transfer.completedAt}" th:text="${@fmt.dateTime(transfer.completedAt)}">—</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack">
+                    <div class="card">
+                        <h3>Статусы перевода</h3>
+                        <div class="row mb-2" style="justify-content:space-between">
+                            <span class="badge badge--muted">Ожидает подтверждения</span>
+                            <span class="small muted">нужен код из СМС</span>
+                        </div>
+                        <div class="row mb-2" style="justify-content:space-between">
+                            <span class="badge badge--warn"><span class="dot"></span> В обработке</span>
+                            <span class="small muted">1–5 секунд</span>
+                        </div>
+                        <div class="row mb-2" style="justify-content:space-between">
+                            <span class="badge badge--ok">Выполнен</span>
+                            <span class="small muted">деньги зачислены</span>
+                        </div>
+                        <div class="row" style="justify-content:space-between">
+                            <span class="badge badge--danger">Отклонён</span>
+                            <span class="small muted">деньги возвращены</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

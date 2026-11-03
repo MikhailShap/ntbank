@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Админка')}"></head>
+<body class="tech">
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Админка стенда', 'admin')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <p class="tech__title">NT-BANK · SERVICE CONSOLE</p>
+                    <h1>Состояние стенда</h1>
+                </div>
+                <div class="page-head__actions">
+                    <a class="btn btn--ghost" th:href="@{/admin/chaos}">
+                        <svg class="icon"><use href="#i-flask"/></svg> Дефекты
+                    </a>
+                    <a class="btn btn--ghost" th:href="@{/actuator/prometheus}" target="_blank">Метрики</a>
+                </div>
+            </div>
+
+            <th:block th:replace="~{fragments/layout :: alerts}"></th:block>
+
+            <div class="grid grid--4 mb-3">
+                <div class="card">
+                    <div class="metric">
+                        <span class="metric__label">Пользователей</span>
+                        <span class="metric__value" th:text="${stats.users}">0</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric">
+                        <span class="metric__label">Счетов</span>
+                        <span class="metric__value" th:text="${stats.accounts}">0</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric">
+                        <span class="metric__label">Операций</span>
+                        <span class="metric__value" th:text="${stats.operations}">0</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="metric">
+                        <span class="metric__label">Услуг в каталоге</span>
+                        <span class="metric__value" th:text="${stats.services}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid--2">
+                <div class="card">
+                    <h3>Сброс тестовых данных</h3>
+                    <p class="muted">
+                        Пересоздаёт пользователей, счета, карты и историю операций,
+                        удаляет переводы, платежи, шаблоны и тестовые СМС.
+                        Каталог услуг и курсы валют не меняются.
+                    </p>
+                    <p class="small muted">
+                        То же самое по REST: <code class="inline">POST /api/dev/reset</code>
+                    </p>
+                    <form method="post" th:action="@{/admin/reset}">
+                        <button class="btn btn--danger" type="submit">
+                            <svg class="icon"><use href="#i-refresh"/></svg> Сбросить данные
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Объём истории операций</h3>
+                    <p class="muted">
+                        Для дефекта «Нет индекса» нужен реалистичный объём: на 125 тысячах строк
+                        полный перебор таблицы почти незаметен, на 2–5 миллионах — очень.
+                    </p>
+                    <form method="post" th:action="@{/admin/history}" class="inline-form">
+                        <div class="field">
+                            <label for="total">Нарастить до</label>
+                            <select class="select" id="total" name="total">
+                                <option value="1000000">1 млн операций</option>
+                                <option value="2000000" selected>2 млн операций</option>
+                                <option value="3000000">3 млн операций</option>
+                                <option value="5000000">5 млн операций</option>
+                            </select>
+                            <span class="field__hint">2 млн — около 35 секунд, 5 млн — полторы-две минуты</span>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn" type="submit">
+                                <svg class="icon"><use href="#i-plus"/></svg> Нарастить
+                            </button>
+                        </div>
+                    </form>
+                    <p class="small muted mt-2 mb-0">
+                        Или при запуске: переменная <code class="inline">SEED_OPERATIONS_TOTAL</code>
+                        в файле <code class="inline">.env</code>
+                        (сейчас <span th:text="${stats.configuredOperations}">0</span>).
+                        По REST: <code class="inline">POST /api/admin/history?total=2000000</code>
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3>Конфигурация</h3>
+                    <dl class="kv">
+                        <dt>Обработка переводов</dt>
+                        <dd th:text="${stats.asyncMode}">memory</dd>
+                        <dt>Антифрод</dt>
+                        <dd th:text="${stats.antifraudMode}">local</dd>
+                        <dt>Пул HikariCP</dt>
+                        <dd th:text="${stats.poolSize}">30</dd>
+                        <dt>Потоки Tomcat</dt>
+                        <dd th:text="${stats.tomcatThreads}">200</dd>
+                        <dt>Файл с логинами</dt>
+                        <dd class="mono" th:text="${stats.csvPath}">/test-data/users.csv</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card card--flush mt-3">
+                <div class="card__head"><h3>Переводы по статусам</h3></div>
+                <div class="table-wrap">
+                    <table class="tbl">
+                        <thead>
+                        <tr>
+                            <th>Статус</th>
+                            <th class="right">Количество</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="row : ${stats.transfersByStatus}">
+                            <td th:text="${row.key}">DONE</td>
+                            <td class="right strong" th:text="${row.value}">0</td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(stats.transfersByStatus)}">
+                            <td colspan="2" class="muted center">Переводов ещё не было</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

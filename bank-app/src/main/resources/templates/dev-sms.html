@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Тестовые СМС')}"></head>
+<body>
+<th:block th:replace="~{fragments/icons :: sprite}"></th:block>
+
+<div class="app">
+    <th:block th:replace="~{fragments/layout :: chrome('Тестовые СМС', 'sms')}"></th:block>
+
+    <main class="main">
+        <div class="main__inner">
+
+            <div class="page-head">
+                <div>
+                    <h1>Тестовые СМС</h1>
+                    <p class="page-head__sub">
+                        Сообщения никуда не отправляются — коды подтверждения видны здесь
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid--main">
+                <div class="stack">
+                    <div class="card">
+                        <form method="get" th:action="@{/dev/sms}" class="inline-form">
+                            <div class="field" style="flex:2 1 240px">
+                                <label for="phone">Номер телефона</label>
+                                <input class="input" type="tel" id="phone" name="phone" th:value="${phone}"
+                                       placeholder="+79000000001">
+                                <span class="field__hint">
+                                    Пусто — показать последние сообщения по всем номерам
+                                </span>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn" type="submit">
+                                    <svg class="icon"><use href="#i-search"/></svg> Показать
+                                </button>
+                                <a class="btn btn--ghost" th:href="@{/dev/sms}">Все</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="phone">
+                        <div class="phone__screen">
+                            <div class="phone__status">
+                                <span th:text="${@fmt.time(now)}">14:35</span>
+                                <span>
+                                    <svg class="icon icon--sm" style="stroke:#44506a"><use href="#i-wifi"/></svg>
+                                </span>
+                            </div>
+                            <div class="phone__title">
+                                Сообщения
+                                <span class="small muted" th:if="${phone}" th:text="' · ' + ${@fmt.phone(phone)}"></span>
+                            </div>
+                            <div class="phone__list">
+                                <div class="sms" th:each="sms : ${messages}">
+                                    <div class="sms__from">НТ-Банк</div>
+                                    <div class="sms__text" th:text="${sms.text}">Текст</div>
+                                    <div class="sms__code" th:if="${sms.code}" th:text="${sms.code}">000000</div>
+                                    <div class="sms__time">
+                                        <span th:text="${@fmt.dateTime(sms.createdAt)}">—</span>
+                                        <span th:if="${phone == null}" th:text="' · ' + ${@fmt.phone(sms.phone)}"></span>
+                                    </div>
+                                </div>
+                                <div class="empty" th:if="${#lists.isEmpty(messages)}">
+                                    <div class="empty__icon">
+                                        <svg class="icon icon--xl"><use href="#i-sms"/></svg>
+                                    </div>
+                                    <p class="empty__title">Сообщений нет</p>
+                                    <p class="small">Создайте перевод по номеру телефона — код придёт сюда.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack">
+                    <div class="card">
+                        <h3>Телефоны тестовых клиентов</h3>
+                        <p class="small muted mb-0">
+                            <code class="inline">user0001</code> → +7 900 000 0001<br>
+                            <code class="inline">user0042</code> → +7 900 000 0042<br>
+                            <code class="inline">user1000</code> → +7 900 000 1000<br>
+                            Тот же список — в файле <code class="inline">test-data/users.csv</code>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>
